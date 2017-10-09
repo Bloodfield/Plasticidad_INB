@@ -48,7 +48,7 @@ Gap_MIN= 500
 debugg = 0
 
 # CIGAR parce regexp
-regex = re.compile("[0-9]+[M,N,D,S,H,P,=,X]")
+regex = re.compile("[0-9]+[M,N,D,S,H,P,X,=]")
 
 #Ciclo de read para un archivo:
 
@@ -84,7 +84,7 @@ with open(sys.argv[1]) as f:
                 if(Gap_Form[size-1-i][-1] in CIGAR_Tags["G"]):
                     if(Gap_Form[size-i][-1] == "G"):
                         Gap_Form[size-1-i]=str(int(Gap_Form[size-1-i][0:-1])+int(Gap_Form[size-i][0:-1]))+"G"
-                        Gap_Form.remove(size-i)
+                        Gap_Form.pop(size-i)
                     else:
                         Gap_Form[size-1-i]=Gap_Form[size-1-i][0:-1]+"G"
                 
@@ -92,7 +92,7 @@ with open(sys.argv[1]) as f:
                 elif(Gap_Form[size-1-i][-1] in CIGAR_Tags["C"]):
                     if(Gap_Form[size-i][-1] == "C"):
                         Gap_Form[size-1-i]=str(int(Gap_Form[size-1-i][0:-1])+int(Gap_Form[size-i][0:-1]))+"C"
-                        Gap_Form.remove(size-i)
+                        Gap_Form.pop(size-i)
                     else:
                         Gap_Form[size-1-i]=Gap_Form[size-1-i][0:-1]+"C"
                         
@@ -102,9 +102,31 @@ with open(sys.argv[1]) as f:
                     
             ##  Parte 2 encontrar el patron _,"(>Clev_MIN)C","(>Gap_MIN)G","(>Clev_MIN)C",_
             
+            S=0
+            ### Maquina de estados para encontrar la secuencia
+            for i in Gap_Form:
+                if debugg: print("_ S=",S,"i[0:-1]=",i[0:-1],"i[-1]",i[-1])
+                if (S==0):
+                    if (int(i[0:-1])>=Clev_MIN and i[-1]=="C"):
+                        S=1
+                elif (S==1):
+                    if (int(i[0:-1])>=Gap_MIN and i[-1]=="G"):
+                        S=2
+                    else:
+                        S=0
+                elif (S==2):
+                    if (int(i[0:-1])>=Clev_MIN and i[-1]=="C"):
+                        S=3
+                    else:
+                        S=0
+                elif (S==3):
+                    S=3
+                else:
+                    S=0
             
-            print(Splited[0],"\t",CIGAR,"\t",Gap_Form)
-                    
+            if(S==3):
+                print(Splited[0],"\t",CIGAR,"\t",Gap_Form)
+            if debugg: print(Splited[0],"\t",CIGAR,"\t",Gap_Form)
                     
             
 
