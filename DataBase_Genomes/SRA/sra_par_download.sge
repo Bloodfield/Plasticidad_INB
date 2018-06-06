@@ -62,11 +62,11 @@
 name="ERR318658"
 n_spots="1608506593"
 n_threads="32"
-quality_treshold="28"
+quality_treshold="20"
 
-#Dirección padre de los archovos a usar (aquí debe estar el indice de segemehl)
+#Dirección padre de los archivos a usar (aquí debe estar el indice de segemehl)
 HOME="/mnt/Timina/mhernandez/echavez"
-#Dirección del genoa de referencia a usar
+#Dirección del genoma de referencia a usar
 HumanRef="/mnt/Archives/genome/human/hg38/UCSC/Homo_sapiens/UCSC/hg38/Sequence/WholeGenomeFasta/genome.fa"
 #Tu correo para ser avisado
 email="echavezaparicio@gmail.com"

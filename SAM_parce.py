@@ -13,6 +13,15 @@
 #--------------------------------------------------------------------
 
 #--------------------------------------------------------------------
+#       Guía de uso:
+#       
+#       $ python SAM_parce.py [sam file]
+#       
+#       outputs in stdout
+#--------------------------------------------------------------------
+
+
+#--------------------------------------------------------------------
 #       FUNCTIONS
 #--------------------------------------------------------------------
 #   1: Flag2Arr
@@ -43,8 +52,8 @@ import sys
 
 #constantes de programa
 CIGAR_Tags = {"G":"DN","C":"MSHP=X"}
-Clev_MIN = 20
-Gap_MIN= 500
+Clev_MIN = 1
+Gap_MIN= 1
 debugg = 0
 
 # CIGAR parce regexp
@@ -55,12 +64,14 @@ regex = re.compile("[0-9]+[M,N,D,S,H,P,X,=]")
 with open(sys.argv[1]) as f:
     for line in f:
         
+        
         #   Descarta comentarios
         if (line[0]!="@"):
+            if debugg : print("LINE:",line)
             
             # separa campos
-            Splited = line.split()
-            
+            Splited = line.split("\t")
+            if debugg : print("Splited:",Splited)
             #obtiene CIGAR
             CIGAR = regex.findall(Splited[5])
             
@@ -110,6 +121,8 @@ with open(sys.argv[1]) as f:
                     if (S==0):
                         if (int(i[0:-1])>=Clev_MIN and i[-1]=="C"):
                             S=1
+                        else:
+                            S=0
                     elif (S==1):
                         if (int(i[0:-1])>=Gap_MIN and i[-1]=="G"):
                             S=2
@@ -126,9 +139,7 @@ with open(sys.argv[1]) as f:
                         S=0
                 
                 if(S==3):
-                    print(Splited[0],"\t",CIGAR,"\t",Gap_Form)
+                    print(line,"\t",Gap_Form)
                 if debugg: print(Splited[0],"\t",CIGAR,"\t",Gap_Form)
-                    
-            
-
-
+            else: print(Splited[0],"Not Valid")
+print("Done")
