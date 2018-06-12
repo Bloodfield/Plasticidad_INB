@@ -139,7 +139,7 @@ with open(sys.argv[1]) as f:
                         S=0
                 
                 if(S==3):
-                    print(line,"\t",Gap_Form)
+                    print(line.rstrip(),"\t",Gap_Form)
                 if debugg: print(Splited[0],"\t",CIGAR,"\t",Gap_Form)
             else: print(Splited[0],"Not Valid")
 print("Done")

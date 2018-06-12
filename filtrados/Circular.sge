@@ -1,0 +1,145 @@
+#!/bin/bash
+# Run job through bash shell
+#$ -S /bin/bash
+#
+# Your job name
+#$ -N Circular
+#
+# Use current working directory
+#$ -cwd
+#
+# Join stdout and stderr
+#$ -j y
+#
+# Send an email after the job has finished
+#$ -m e
+#$ -M echavezaparicio@gmail.com
+#
+
+##---------------------------------------------------------
+#	DESCRIPCIÓN
+#   
+#	Este programa crea
+#   
+#	Importante:
+#   
+#	IN:
+#		file_names		= Nombres de raiz en los sam y bed
+#
+#	OUT:
+#		Variable		= Explicación
+
+##---------------------------------------------------------
+
+##---------------------------------------------------------
+#	TO DO LIST
+#	
+#	Comentar
+#	Guía de uso
+##---------------------------------------------------------
+
+
+########	Config Zone
+
+####	Variables de entrada
+
+file_names=("" "")
+Chr=("chr1" "chr2" "chr3" "chr4" "chr5" "chr6" "chr7" "chr8" "chr9" "chr10" "chr11" "chr12" "chr13" "chr14" "chr15" "chr16" "chr17" "chr18" "chr19" "chr20" "chr21" "chr22" "chr23")
+
+####	Direcciones
+
+#Dirección padre de los archivos a usar (aquí debe estar el indice de segemehl)
+HOME="/mnt/Timina/mhernandez/echavez"
+#Dirección del genoma de referencia a usar
+HumanRef="/mnt/Archives/genome/human/hg38/UCSC/Homo_sapiens/UCSC/hg38/Sequence/WholeGenomeFasta/genome.fa"
+#Habilitación de scripts personales
+PATH=$PATH:$HOME/bin
+#Tu correo para ser avisado
+email="echavezaparicio@gmail.com"
+
+########	Script zone
+
+
+for i in `seq 0 ${#file_names[@]}`
+	do
+
+	echo File $i
+	
+	egrep ";C;" ${file_names[$i]}.fastq.sngl.bed > ${file_names[$i]}_C.fastq.sngl.bed
+	egrep ";B;" ${file_names[$i]}.fastq.sngl.bed > ${file_names[$i]}_B.fastq.sngl.bed
+
+	echo parce
+	SAM_parce.pl ${file_names[$i]}.sam > ${file_names[$i]}_splitreads.sam  #SAM
+	echo search C
+	search_bed_sam.pl ${file_names[i]}_C.fastq.sngl.bed ${file_names[i]}.sam > ${file_names[i]}_C.fastq.sngl.sam # bed sam C
+	echo search B
+	search_bed_sam.pl ${file_names[i]}_B.fastq.sngl.bed ${file_names[i]}.sam > ${file_names[i]}_B.fastq.sngl.sam # bed sam B
+	
+	for j in `seq 0 ${#Chr[@]}`
+		do
+	
+		# sam del cromosoma
+		grep -P "Chr${j}\t" ${file_names[$i]}_splitreads.sam  > ${file_names[$i]}_splitreads_Chr${j}.sam
+		
+		printf "#!/bin/bash
+# Run job through bash shell
+\n#$ -S /bin/bash
+#
+# Your job name
+\n#$ -N stairways_${file_names[$i]}_Chr${j}
+#
+# Use current working directory
+\n#$ -cwd
+#
+# Join stdout and stderr
+\n#$ -j y
+#
+# Send an email after the job has finished
+\n#$ -m e
+\n#$ -M $correo
+#
+# If modules are needed, source modules environment (Do not delete the next line):
+. /etc/profile.d/modules.sh
+
+##---------------------------------------------------------
+#	DESCRIPCIÓN
+#   
+#	Este programa crea los archivos sam divididos por bloques.
+#   
+#	Importante:
+#   
+#	IN:
+#		Variable		= Explicación
+#
+#	OUT:
+#		Variable		= Explicación
+
+##---------------------------------------------------------
+
+##---------------------------------------------------------
+#	TO DO LIST
+#   
+##---------------------------------------------------------
+
+
+########	Config Zone
+
+####	Variables de entrada
+
+
+####	Direcciones
+
+#Dirección padre de los archivos a usar (aquí debe estar el indice de segemehl)
+HOME="/mnt/Timina/mhernandez/echavez"
+#Habilitación de scripts personales
+PATH=$PATH:$HOME/bin
+
+########	Script zone
+
+
+sort -k6 -n ${file_names[$i]}_splitreads_Chr${j}.sam | stairways.pl > ${file_names[$i]}_splitreads_Chr${j}_stairs.sam
+
+" > stairways_${file_names[$i]}_Chr${j}.sge
+		done
+	done
+	

@@ -1,3 +1,5 @@
+#!/usr/bin/perl -n
+
 #       search_bed_sam
 #   Edgar Chávez Aparicio
 #
@@ -19,7 +21,7 @@
 #--------------------------------------------------------------------
 #       Guía de uso:
 #       
-#       $ python search_bed_sam.py [bed file] [sam file]
+#       $ perl search_bed_sam.py [bed file] [sam file]
 #       
 #       outputs in stdout
 #
@@ -31,30 +33,43 @@
 #       MAIN
 #--------------------------------------------------------------------
 
-import sys
+use strict;
+use warnings;
+ 
+#	ABRIR ARCHIVO
 
-#constantes de programa
-debugg = 1
+# abre lista de BED
+# my $file_BED = $ARGV[0];
+# open(my $fh_BED, '<:encoding(UTF-8)', $file_BED)
+#   or die "Error con: '$file_BED' $!"; 
 
-#Ciclo de read para un archivo:
-BedLine = []
+my	@search = ();
 
-if debugg : print("Generando array de busqueda <- BED")
-with open(sys.argv[1]) as f:
-    for line in f:
-        if debugg : print("Line:",line)
-        
-        
-        # Genera diccionario
-        Splited = line.split()
-        Search = Splited[3].split(";")[2]
-        BedLine.append(Search)
-        if debugg : print("BedLine append",Search)
+while (my $line = <>) {
+	# obtener datos
+	chomp $line;
+	# #   print "$line\n";
+	my	@elems	= split '\t', $line;
+	print "$elems[3]";
+	my 	@split	= split ';' , $elems[3];
+	@search=(@search,$split[2]);
+}
 
-if debugg : print("Buscando")
-with open(sys.argv[2]) as f:
-    for line in f:
-        if (line[0]!="@"):
-            Splited = line.split()
-            if(BedLine.__contains__(Splited[0])):
-                print(line)
+close($fh_BED);
+
+my	%test = map { $_, 1 } @search;
+
+# Busca en el SAM
+my $file_SAM = $ARGV[1];
+open(my $fh_SAM, '<:encoding(UTF-8)', $file_SAM)
+  or die "Error con: '$file_SAM' $!"; 
+
+while (my $line = <$fh_SAM>) {
+	if($line !~ m/^\@/){
+		my	@elems	= split ' ', $line;
+		if	( $test{ $elems[0] } ){
+			print "$line"
+		}
+	}
+}
+close($fh_SAM);
