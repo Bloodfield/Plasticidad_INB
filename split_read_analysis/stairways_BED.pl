@@ -1,4 +1,4 @@
-#!/usr/bin/perl -n
+#!/usr/bin/perl
 
 ##---------------------------------------------------------
 #   DESCRIPCIÓN
@@ -19,13 +19,10 @@
 #   
 #   
 #   Importante:
-#   Se lee un parametro final de cad alinea del SAM
-#       de la forma \[('[0-9]*[G,C]',)*'[0-9]*[G,C]'\]
-#        Por ejemplo: ['58C', '1G', '42C']
 #   
 #   IN:	SAM ordenado
 #
-#       perl stairways.pl $ordenado.sam
+#       perl stairways_BED.pl [$ordenado.sam]
 #   
 #   OUT (stdout):
 #
@@ -49,23 +46,9 @@ use warnings;
 # my $filename = $ARGV[0];
 # open(my $fh, '<:encoding(UTF-8)', $filename)
 #   or die "Error con: '$filename' $!"; 
-
-
-#	FUNCIONES DE PROGRAMA
-
-sub read_length{
-	my @nums    =  ();
-	my @sumand  =  ();
-	my $sum     =  0;
-	@nums       =  split /[^0-9]+/ ,$_[0];
-	@sumand     =  grep /\S/, @nums;
-# 	print "@sumand";
-	$sum       +=  $_ for @sumand;
-	return $sum
-}
   
 #	VARIABLES INTERNAS
-#my @reads	= ();
+
 my $count	= 0;	# $#reads
 my $count_bloq	= 0;
 my $last	= 0;
@@ -74,44 +57,47 @@ my $f_min	= 0;
 my $i_max	= 0;
 my $i		= 0;
 my $f		= 0;
+my $l_min	= 0;
+my $l_avr	= 0.0;
+my $l_max	= 0;
 
 #	LEER ARCHIVO
 
-while (my $line = <>) {
+while (my $line = <STDIN>) {
+	
 	# obtener datos
 	chomp $line;
-	# #   print "$line\n";
 	my @elems	= split '\t', $line;
-	$i		= $elems[3];
+	$i		= $elems[1];
+	$f		= $elems[2];
 	
-	
-	#   print "$elems[-1]\n";
-	$f	= &read_length($elems[-1]);
-	$f	+=$i-1;
-# 	print "$f\t$i\n";
-	#print "$row\n";
-	
-# 	print "$i\t$last\n";
 	#	revisar bloque
 	if ($i > $last){
+		
+		#	Imprimir separador
 		if($count_bloq > 0){
 			my $l	=	$last - $first;
 			my $dl	=	$i_max - $f_min;
-			print "\@$count_bloq\t$count\t$l\t$dl\n";
-			#print "\@$count_bloq\t$#reads\t$l\t$dl\n";
-			#print join("\n",@reads),"\n";
-			
+			print "\@${first} _____\t${i_max}\t${f_min}\t____ ${last}\n";
+			print "\@$count_bloq,n=$count,l=$l,d=$dl\n";
+			print "\@Distr=[$l_min,$l_avr,$l_max]\n";
 		}
-		#@reads	= ($line);
- 		$count	= 1;
+		
+		#	RESET
+		$count	= 1;
 		$count_bloq++;
 		$last	= $f;
 		$first	= $i;
 		$f_min	= $f;
 		$i_max	= $i;
+		$l_max	= $f-$i;
+		$l_min	= $f-$i;
+		$l_avr	= 0;
 		
-	}else{
-		#@reads=(@reads,$line);
+	}
+	
+	#	Añadir read a bloque
+	else{
  		$count++;
 		if($f> $last){
 			$last=$f;
@@ -122,14 +108,19 @@ while (my $line = <>) {
 		if($i_max < $i){
 			$i_max=$i;
 		}
-		
-		
 	}
+	
+	#	Length Stats
+	my $l = $f-$i;
+	if($l>$l_max){$l_max=$l;}
+	elsif($l<$l_min){$l_min=$l;}
+	$l_avr = (($count-1)*$l_avr+$l)/$count;
+	
 	print "$line\n";
   
 }
 my $l	=	$last - $first;
 my $dl	=	$i_max - $f_min;
-print "\@$count_bloq\t$count\t$l\t$dl\n";
-#print "\@$count_bloq\t$#reads\t$l\t$dl\n";
-#print join("\n",@reads),"\n";
+print "\@${first} _____\t${i_max}\t${f_min}\t____ ${last}\n";
+print "\@$count_bloq,n=$count,l=$l,d=$dl\n";
+print "\@Distr=[$l_min,$l_avr,$l_max]\n";

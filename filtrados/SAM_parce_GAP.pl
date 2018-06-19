@@ -5,6 +5,8 @@
 #   Edgar Chávez Aparicio
 #
 #   Es un programa que permite la lectura y análisis de SAM-files
+#	Encuetra Gaps con los parametros indicados.
+#	Se reportan en formato BED
 #
 #   Referencias:
 #
@@ -17,7 +19,7 @@
 #--------------------------------------------------------------------
 #       Guía de uso:
 #       
-#       $ perl SAM_parce.pl [sam file]
+#       $ perl SAM_parce_GAP.pl [sam file]
 #       
 #       outputs in stdout
 #--------------------------------------------------------------------
@@ -40,13 +42,19 @@ my	$G_min	= 1;
 # open(my $fh_SAM, '<:encoding(UTF-8)', $file_SAM)
 #   or die "Error con: '$file_SAM' $!"; 
 
+#	Prin Head
+#print "track name=\"GAP_List\" description=\"Gaps of $G_min bases between $C_min alignments\" \n";
+
 while (my $line = <>) {
+	
 	if($line !~ m/^\@/){
-# 		print "$line";
+		
+		#	Estract info and translate CIGAR
 		my	@elems	= split '\t', $line;
-		$elems[5] =~ tr/[DN]/G/;
-		$elems[5] =~ tr/[MSHP=X]/C/;
-		my	@CIGAR = ( $elems[5] =~ m/([0-9]+[GC])/g );	#not working
+		$elems[5] =~ tr/[DN]/G/;	#GAP
+		$elems[5] =~ tr/[SHP]/O/;	#null
+		$elems[5] =~ tr/[M=X]/C/;	#Cleverage
+		my	@CIGAR = ( $elems[5] =~ m/([0-9]+[GC])/g );
 		
 		
 		#	Máquina de estados
@@ -55,51 +63,72 @@ while (my $line = <>) {
 		my	$C1	= 0;
 		my	$C2	= 0;
 		my	$G	= 0;
-		my	$flag	= 0;
+		my	$inicio	= 0;
+		my	$fin	= 0;
 		
 		for my $i (0 .. $#CIGAR){
+		
+			#	Stand By
 			if ($state eq "S0") {
 				if($CIGAR[$i] =~ m/C$/){
 					$C1 +=  substr $CIGAR[$i], 0, -1;
-					$state = "S1";
+					$state = "C1";
 				}
 			}
-			elsif ($state eq "S1") {
+			
+			#	Clevarage 1
+			elsif ($state eq "C1") {
 				if($CIGAR[$i] =~ m/C$/){
 					$C1 +=  substr $CIGAR[$i], 0, -1;
 				}elsif($CIGAR[$i] =~ m/G$/){
 					$G +=   substr $CIGAR[$i], 0, -1;
-					$state = "S2";
-				}else{print "Err in CIGAR\n";}
+					$state = "G";
+				}
 			}
-			elsif ($state eq "S2") {
+			
+			#	Gap
+			elsif ($state eq "G") {
 				if($CIGAR[$i] =~ m/G$/){
 					$G +=  substr $CIGAR[$i], 0, -1;
 				}elsif($CIGAR[$i] =~ m/C$/){
 					$C2 +=   substr $CIGAR[$i], 0, -1;
-					$state = "S3";
-				}else{print "Err in CIGAR\n";}
+					$state = "C2";
+				}
 			}
-			elsif ($state eq "S3") {
+			
+			#	Clevarage 2
+			elsif ($state eq "C2") {
 				if($CIGAR[$i] =~ m/C$/){
-					$C1 +=  substr $CIGAR[$i -1], 0, -1;
+					$C2 +=  substr $CIGAR[$i -1], 0, -1;
 				}elsif($CIGAR[$i] =~ m/G$/){
-					if($C1 > $C_min && $C2 > $C_min && $G > $G_min){
-						$flag = 1;
+					
+					#	Test -> print
+					if($C1 >= $C_min && $C2 >= $C_min && $G >= $G_min){
+						$inicio	= $elems[3] + $C1;
+						$fin	= $inicio + $G;
+						print "$elems[2]\t$inicio\t$fin\t$elems[0]\n";
 					}
-					$C1 = $C2;
-					$C2 = 0;
-					$G =   substr $CIGAR[$i], 0, -1;
-					$state = "S2";
-				}else{print "Err in CIGAR\n";}
+					
+					#	RESET
+					$C1	= $C2;
+					$C2	= 0;
+					$G	= substr $CIGAR[$i], 0, -1;
+					$inicio	= 0;
+					$fin	= 0;
+					$state	= "C1";
+					
+				}
 			}
+			
+			#	FSM Err
 			else {print "Err if case";}
 		}
-		if($C1 > $C_min && $C2 > $C_min && $G > $G_min){$flag = 1;}
 		
-		
-		if($flag == 1) {print "$line";}
-		
-		
+		#	Last Step
+		if($C1 >= $C_min && $C2 >= $C_min && $G >= $G_min){
+			$inicio	= $elems[3] + $C1;
+			$fin	= $inicio + $G;
+			print "$elems[2]\t$inicio\t$fin\t$elems[0]\n";
+		}
 	}
 }
