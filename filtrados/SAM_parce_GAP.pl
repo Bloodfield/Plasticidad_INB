@@ -61,10 +61,17 @@ while (my $line = <STDIN>) {
 		
 		my	$state	= "S0";
 		my	$C1	= 0;
+		my	$DC2	= 0;
 		my	$C2	= 0;
 		my	$G	= 0;
 		my	$inicio	= 0;
 		my	$fin	= 0;
+		
+		for my $i (0 .. $#CIGAR){
+			if ($CIGAR[$i] =~ m/C$/){
+				$C2 +=  substr $CIGAR[$i], 0, -1;
+			}
+		}
 		
 		for my $i (0 .. $#CIGAR){
 		
@@ -91,17 +98,18 @@ while (my $line = <STDIN>) {
 				if($CIGAR[$i] =~ m/G$/){
 					$G +=  substr $CIGAR[$i], 0, -1;
 				}elsif($CIGAR[$i] =~ m/C$/){
-					$C2 +=   substr $CIGAR[$i], 0, -1;
+					$DC2 +=   substr $CIGAR[$i], 0, -1;
 					$state = "C2";
+					$C2 -= $C1;
 				}
 			}
 			
 			#	Clevarage 2
 			elsif ($state eq "C2") {
 				if($CIGAR[$i] =~ m/C$/){
-					$C2 +=  substr $CIGAR[$i -1], 0, -1;
+					$DC2 +=  substr $CIGAR[$i -1], 0, -1;
 				}elsif($CIGAR[$i] =~ m/G$/){
-					
+				
 					#	Test -> print
 					if($C1 >= $C_min && $C2 >= $C_min && $G >= $G_min){
 						$inicio	= $elems[3] + $C1;
@@ -110,8 +118,8 @@ while (my $line = <STDIN>) {
 					}
 					
 					#	RESET
-					$C1	= $C2;
-					$C2	= 0;
+					$C1	+= $DC2;
+					$DC2	= 0;
 					$G	= substr $CIGAR[$i], 0, -1;
 					$inicio	= 0;
 					$fin	= 0;
