@@ -30,10 +30,11 @@
 
 use strict;
 use warnings;
- 
+use Getopt::Long;
 
 my	$C_min	= 1;
 my	$G_min	= 1;
+my	$G_max	= 100000;
 
 #	ABRIR ARCHIVO
 
@@ -44,6 +45,11 @@ my	$G_min	= 1;
 
 #	Prin Head
 #print "track name=\"GAP_List\" description=\"Gaps of $G_min bases between $C_min alignments\" \n";
+
+GetOptions	('MinClev:i'=> \$C_min,
+		'MaxGap:i'=> \$G_max,
+		'MinGap:i'=> \$G_min);
+
 
 while (my $line = <STDIN>) {
 	
@@ -111,7 +117,7 @@ while (my $line = <STDIN>) {
 				}elsif($CIGAR[$i] =~ m/G$/){
 				
 					#	Test -> print
-					if($C1 >= $C_min && $C2 >= $C_min && $G >= $G_min){
+					if($C1 >= $C_min && $C2 >= $C_min && $G >= $G_min && $G <= $G_max){
 						$inicio	= $elems[3] + $C1;
 						$fin	= $inicio + $G;
 						print "$elems[2]\t$inicio\t$fin\t$elems[0]\n";
@@ -133,7 +139,7 @@ while (my $line = <STDIN>) {
 		}
 		
 		#	Last Step
-		if($C1 >= $C_min && $C2 >= $C_min && $G >= $G_min){
+		if($C1 >= $C_min && $C2 >= $C_min && $G >= $G_min && $G <= $G_max){
 			$inicio	= $elems[3] + $C1;
 			$fin	= $inicio + $G;
 			print "$elems[2]\t$inicio\t$fin\t$elems[0]\n";

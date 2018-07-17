@@ -3,7 +3,7 @@
 ##---------------------------------------------------------
 #   DESCRIPCIÓN
 #   
-#   Este programa permite revisar los bloques de reads de un SAM
+#   Este programa permite revisar los bloques de reads de un BED
 #   Un bloque son reads que sobrelapan
 #
 #   ________________
@@ -20,13 +20,13 @@
 #   
 #   Importante:
 #   
-#   IN:	SAM ordenado
+#   IN:	BED ordenado
 #
-#       perl stairways_BED.pl [$ordenado.sam]
+#       perl stairways_BED.pl [$ordenado.bed]
 #   
 #   OUT (stdout):
 #
-#       Sam separado en bloques
+#       BED separado en bloques
 #       
 ##---------------------------------------------------------
 
