@@ -68,6 +68,8 @@ quality_treshold="20"
 HOME="/mnt/Timina/mhernandez/echavez"
 #Dirección del genoma de referencia a usar
 HumanRef="/mnt/Archives/genome/human/hg38/UCSC/Homo_sapiens/UCSC/hg38/Sequence/WholeGenomeFasta/genome.fa"
+#Habilitación de scripts personales
+PATH=$PATH:$HOME/bin
 #Tu correo para ser avisado
 email="echavezaparicio@gmail.com"
 

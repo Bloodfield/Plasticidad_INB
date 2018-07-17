@@ -1,4 +1,4 @@
-#!/usr/bin/perl -n
+#!/usr/bin/perl
 
 #--------------------------------------------------------------------
 #       SAM_parce
@@ -45,7 +45,7 @@ my	$G_min	= 1;
 #	Prin Head
 #print "track name=\"GAP_List\" description=\"Gaps of $G_min bases between $C_min alignments\" \n";
 
-while (my $line = <>) {
+while (my $line = <STDIN>) {
 	
 	if($line !~ m/^\@/){
 		

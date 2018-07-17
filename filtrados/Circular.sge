@@ -47,7 +47,7 @@
 
 ####	Variables de entrada
 
-file_names=("ERR318658_1_cured")
+file_names=("ERR318661_1_cured")
 Chr=("chr1")
 # "chr2" "chr3" "chr4" "chr5" "chr6" "chr7" "chr8" "chr9" "chr10" "chr11" "chr12" "chr13" "chr14" "chr15" "chr16" "chr17" "chr18" "chr19" "chr20" "chr21" "chr22" "chr23")
 
@@ -63,7 +63,7 @@ email="echavezaparicio@gmail.com"
 ########	Script zone
 
 
-for i in `seq 0 ${#file_names[@]}`
+for i in `seq 0 (${#file_names[@]}-1)`
 	do
 
 	echo File ${file_names[$i]}
@@ -72,25 +72,25 @@ for i in `seq 0 ${#file_names[@]}`
 	egrep ";B;" ${file_names[$i]}.fastq.sngl.bed > ${file_names[$i]}_B.fastq.sngl.bed
 
 	echo parce
-	SAM_parce_GAP.pl ${file_names[$i]}.sam > ${file_names[$i]}_splitreads.sam  #SAM
+	cat ${file_names[$i]}.sam | SAM_parce_GAP.pl  > ${file_names[$i]}_splitreads.bed  #SAM
 	echo search C
 	search_bed_sam.pl ${file_names[i]}_C.fastq.sngl.bed ${file_names[i]}.sam > ${file_names[i]}_C.fastq.sngl.sam # bed sam C
 	echo search B
 	search_bed_sam.pl ${file_names[i]}_B.fastq.sngl.bed ${file_names[i]}.sam > ${file_names[i]}_B.fastq.sngl.sam # bed sam B
 	
-	for j in `seq 0 ${#Chr[@]}`
+	for j in `seq 0 (${#Chr[@]}-1)`
 		do
 	
 		# sam del cromosoma
-		echo obtaining ${file_names[$i]}_splitreads_Chr${j}.sam
-		grep -P "^${Chr[j]}\t" ${file_names[$i]}_splitreads.sam  > ${file_names[$i]}_splitreads_Chr${j}.sam
+		echo obtaining ${file_names[$i]}_splitreads_${Chr[$j]}.bed
+		grep -P "^${Chr[$j]}\t" ${file_names[$i]}_splitreads.bed  > ${file_names[$i]}_splitreads_${Chr[$j]}.bed
 		
 		printf "#!/bin/bash
 # Run job through bash shell
 \n#$ -S /bin/bash
 #
 # Your job name
-\n#$ -N stairways_${file_names[$i]}_${Chr[j]}
+\n#$ -N stairways_${file_names[$i]}_${Chr[$j]}
 #
 # Use current working directory
 \n#$ -cwd
@@ -100,7 +100,7 @@ for i in `seq 0 ${#file_names[@]}`
 #
 # Send an email after the job has finished
 \n#$ -m e
-\n#$ -M $correo
+\n#$ -M $email
 #
 # If modules are needed, source modules environment (Do not delete the next line):
 . /etc/profile.d/modules.sh
@@ -141,10 +141,10 @@ PATH=$PATH:$HOME/bin
 ########	Script zone
 
 
-sort -k2 -n ${file_names[$i]}_splitreads_Chr${j}.sam | stairways_BED.pl > ${file_names[$i]}_splitreads_Chr${j}_stairs.sam
+sort -k2 -n ${file_names[$i]}_splitreads_${Chr[$j]}.bed | stairways_BED.pl > ${file_names[$i]}_splitreads_${Chr[$j]}_stairs.bed
 
-" > stairways_${file_names[$i]}_Chr${j}.sge
-		echo stairways_${file_names[$i]}_Chr${j}.sge created
+" > stairways_${file_names[$i]}_${Chr[$j]}.sge
+		echo stairways_${file_names[$i]}_${Chr[$j]}.sge created
 		done
 	done
 	
