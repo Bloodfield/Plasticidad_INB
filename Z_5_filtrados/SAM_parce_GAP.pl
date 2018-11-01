@@ -58,8 +58,8 @@ while (my $line = <STDIN>) {
 		#	Estract info and translate CIGAR
 		my	@elems	= split '\t', $line;
 		$elems[5] =~ tr/[DN]/G/;	#GAP
-		$elems[5] =~ tr/[SHP]/O/;	#null
-		$elems[5] =~ tr/[M=X]/C/;	#Cleverage
+		$elems[5] =~ tr/[HP]/O/;	#null
+		$elems[5] =~ tr/[ISM=X]/C/;	#Cleverage
 		my	@CIGAR = ( $elems[5] =~ m/([0-9]+[GC])/g );
 		
 		

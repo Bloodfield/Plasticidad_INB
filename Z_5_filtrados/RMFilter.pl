@@ -70,7 +70,7 @@ use List::Util qw[min max];
 # Defaults
 my $Chromosome = 1;
 my $MaxPercentage = 20.0;
-my $q_bases = 20;
+my $q_bases = 300;
 
 
 GetOptions	('Chromosome:i'=> \$Chromosome,

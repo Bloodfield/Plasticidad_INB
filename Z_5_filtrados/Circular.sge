@@ -47,9 +47,8 @@
 
 ####	Variables de entrada
 
-file_names=("ERR318661_1_cured")
-Chr=("chr1")
-# "chr2" "chr3" "chr4" "chr5" "chr6" "chr7" "chr8" "chr9" "chr10" "chr11" "chr12" "chr13" "chr14" "chr15" "chr16" "chr17" "chr18" "chr19" "chr20" "chr21" "chr22" "chr23")
+file_names=("SRR822843_1_cured" "SRR822843_2_cured" "SRR822843_cured")
+Chr=("chr1" "chr2" "chr3" "chr4" "chr5" "chr6" "chr7" "chr8" "chr9" "chr10" "chr11" "chr12" "chr13" "chr14" "chr15" "chr16" "chr17" "chr18" "chr19" "chr20" "chr21" "chr22" "chr23")
 
 ####	Direcciones
 
@@ -62,35 +61,45 @@ email="echavezaparicio@gmail.com"
 
 ########	Script zone
 
+# If modules are needed, source modules environment (Do not delete the next line):
+. /etc/profile.d/modules.sh
 
-for i in `seq 0 (${#file_names[@]}-1)`
+
+module load htslib/1.2.1
+module load samtools
+
+end=$((${#file_names[@]}-1))
+Chr_num=$((${#Chr[@]}-1))
+
+for i in `seq 0 $end`
 	do
 
 	echo File ${file_names[$i]}
 	
-	egrep ";C;" ${file_names[$i]}.fastq.sngl.bed > ${file_names[$i]}_C.fastq.sngl.bed
-	egrep ";B;" ${file_names[$i]}.fastq.sngl.bed > ${file_names[$i]}_B.fastq.sngl.bed
+# 	egrep ";C;" ${file_names[$i]}.fastq.sngl.bed > ${file_names[$i]}_C.fastq.sngl.bed
+# 	egrep ";B;" ${file_names[$i]}.fastq.sngl.bed > ${file_names[$i]}_B.fastq.sngl.bed
 
 	echo parce
-	cat ${file_names[$i]}.sam | SAM_parce_GAP.pl  > ${file_names[$i]}_splitreads.bed  #SAM
-	echo search C
-	search_bed_sam.pl ${file_names[i]}_C.fastq.sngl.bed ${file_names[i]}.sam > ${file_names[i]}_C.fastq.sngl.sam # bed sam C
-	echo search B
-	search_bed_sam.pl ${file_names[i]}_B.fastq.sngl.bed ${file_names[i]}.sam > ${file_names[i]}_B.fastq.sngl.sam # bed sam B
+	samtools view -h ${file_names[$i]}.bam | SAM_parce_GAP.pl  > ${file_names[$i]}_splitreads.bed  #SAM
+# 	cat ${file_names[$i]}.sam | SAM_parce_GAP.pl  > ${file_names[$i]}_splitreads.bed  #SAM
+# 	echo search C
+# 	search_bed_sam.pl ${file_names[i]}_C.fastq.sngl.bed ${file_names[i]}.sam > ${file_names[i]}_C.fastq.sngl.sam # bed sam C
+# 	echo search B
+# 	search_bed_sam.pl ${file_names[i]}_B.fastq.sngl.bed ${file_names[i]}.sam > ${file_names[i]}_B.fastq.sngl.sam # bed sam B
 	
-	for j in `seq 0 (${#Chr[@]}-1)`
+	for j in `seq 0 $Chr_num`
 		do
 	
 		# sam del cromosoma
 		echo obtaining ${file_names[$i]}_splitreads_${Chr[$j]}.bed
-		grep -P "^${Chr[$j]}\t" ${file_names[$i]}_splitreads.bed  > ${file_names[$i]}_splitreads_${Chr[$j]}.bed
+		grep -P "^[^\t]*\t[^\t]*\t${Chr[$j]}\t" ${file_names[$i]}_splitreads.bed  | sort -k2 -n > ${file_names[$i]}_splitreads_${Chr[$j]}.bed
 		
 		printf "#!/bin/bash
 # Run job through bash shell
 \n#$ -S /bin/bash
 #
 # Your job name
-\n#$ -N stairways_${file_names[$i]}_${Chr[$j]}
+\n#$ -N CoDel_${file_names[$i]}_${Chr[$j]}
 #
 # Use current working directory
 \n#$ -cwd
@@ -108,7 +117,7 @@ for i in `seq 0 (${#file_names[@]}-1)`
 ##---------------------------------------------------------
 #	DESCRIPCIÓN
 #   
-#	Este programa crea los archivos sam divididos por bloques.
+#	Este programa revisa los bloques de los perfiles de sobrelapamieto de deleciones
 #   
 #	Importante:
 #   
@@ -138,13 +147,16 @@ HOME="/mnt/Timina/mhernandez/echavez"
 #Habilitación de scripts personales
 PATH=$PATH:$HOME/bin
 
+module load gcc
+module load bedtools
+
 ########	Script zone
 
+#sort -k2 -n ${file_names[$i]}_splitreads_${Chr[$j]}.bed > ${file_names[$i]}_splitreads_${Chr[$j]}_sorted.bed
+genomeCoverageBed -d -i ${file_names[$i]}_splitreads_${Chr[$j]}_sorted.bed -g human.genome | CoDel.pl > ${file_names[$i]}_splitreads_${Chr[$j]}_sorted_Bloq.bed
 
-sort -k2 -n ${file_names[$i]}_splitreads_${Chr[$j]}.bed | stairways_BED.pl > ${file_names[$i]}_splitreads_${Chr[$j]}_stairs.bed
-
-" > stairways_${file_names[$i]}_${Chr[$j]}.sge
-		echo stairways_${file_names[$i]}_${Chr[$j]}.sge created
+" > CoDel_${file_names[$i]}_${Chr[$j]}.sge
+		echo CoDel_${file_names[$i]}_${Chr[$j]}.sge created
 		done
 	done
 	
