@@ -54,6 +54,7 @@
 #
 #	Guía de uso
 #	Prueba real
+#	Eficientar caché
 #--------------------------------------------------------------------
 
 #--------------------------------------------------------------------
@@ -68,124 +69,177 @@ use List::Util qw[min max];
 #	Parámetros de ejecución
 
 # Defaults
-my $Chromosome = 1;
 my $MaxPercentage = 20.0;
 my $q_bases = 300;
+my $Chromosome = "chr1";
 
-
-GetOptions	('Chromosome:i'=> \$Chromosome,
-		'max_per:f' => \$MaxPercentage,
-		'q_nbases:i' => \$q_bases);
+GetOptions	('max_per:f' => \$MaxPercentage,
+		'q_nbases:i' => \$q_bases,
+		'Chromosome:s' => \$Chromosome);
 
 #	Configuración del programa
 
-#my $rmsk_dir = '/mnt/Timina/mhernandez/echavez/';
-my $rmsk_dir = './';
+my $rmsk_dir = '/mnt/Timina/mhernandez/echavez/rmsk/';
+# my $rmsk_dir = '';
 
 
 #	Programa
 
+#		Lista de coordenadas del RM
+my $rmsk_file= join "", $rmsk_dir, "rmsk_", $Chromosome, ".txt";
+open(my $fh_rmsk, '<:encoding(UTF-8)', $rmsk_file)
+	or die "Error con: '$rmsk_file' $!";
+
+my @RMList = ();
+my $RMList_len = 0;
+while(my $line = <$fh_rmsk>){
+	my @repeat = split '\t', $line;
+	my @RM_line = ($repeat[6],$repeat[7]);
+	push @RMList , [ @RM_line ];
+	$RMList_len += 1;
+	}
+close($fh_rmsk);
+
+#		Masking
 my $eq_bases = $MaxPercentage*$q_bases/100;
-$rmsk_dir= join "", $rmsk_dir, "rmsk_Chr", $Chromosome, ".txt";
+
 
 while (my $line = <STDIN>) {
 	
 	## Flanco Izquierdo
 	
 	
-# 	print("_Lines\n");
-	
-	open(my $fh_rmsk, '<:encoding(UTF-8)', $rmsk_dir)
-	or die "Error con: '$rmsk_dir' $!";
-	
 	my $overlap = 0;
 	my $coord = 0;
-	my @repeat = split '\t', <$fh_rmsk>;
 	my @deletion = split '\t', $line;
+	#	cambiar flanco por una lista
 	my %flanco = (
 		"init"  => $deletion[1]-$q_bases,
 		"end" => $deletion[1]);
-# 	print($flanco{init},"\t",$flanco{end},"\n");
 	
-	while($repeat[7] < $flanco{init} && ! eof($fh_rmsk)){
-		@repeat = split '\t', <$fh_rmsk>;
-# 		print($repeat[7],"\n");
-	}
-# 	print($repeat[6],"\t",$repeat[7],"\n");
-	while($repeat[6] < $flanco{end} && ! eof($fh_rmsk)){
-		if($repeat[7]>$flanco{end}){
-			$repeat[7]=$flanco{end};
-		}
+	#	Choosing Chromosome rmsk file
+# 	my $Chromosome = $deletion[0];
+# 	my $rmsk_file= join "", $rmsk_dir, "rmsk_", $Chromosome, ".txt";
+
+	#		mover esta condición	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	if (-f $rmsk_file){
+# 		open(my $fh_rmsk, '<:encoding(UTF-8)', $rmsk_file)
+# 		or die "Error con: '$rmsk_file' $!";
 		
+# 		my @repeat = split '\t', <$fh_rmsk>;
+# 		while($repeat[7] < $flanco{init} && ! eof($fh_rmsk)){
+# 			@repeat = split '\t', <$fh_rmsk>;
+# 		}
+		my $counter = 0;
 		
-		if ($repeat[6] < $flanco{init}){
-			$overlap = $repeat[7] - $flanco{init};
-			$coord = max($repeat[7],$coord);
-		}elsif($repeat[6] > $coord){
-			$overlap += $repeat[7] - $repeat[6];
-			$coord = $repeat[7];
-		}elsif($repeat[7] > $coord){
-			$overlap += $repeat[7] - $coord;
-			$coord = $repeat[7];
-		}
+		#	busca coordenadas de sobrelape
+		while($RMList[$counter][0] < $flanco{init} && $counter < $RMList_len){}
 		
-		@repeat = split '\t', <$fh_rmsk>;
-	}
-	
-	close($fh_rmsk);
-	
-	## Flanco Derecho
-	
-	if($overlap < $eq_bases){
-	
-		open(my $fh_rmsk, '<:encoding(UTF-8)', $rmsk_dir)
-		or die "Error con: '$rmsk_dir' $!";
-		
-		$coord = 0;
-		$overlap = 0;
-		@repeat = split '\t', <$fh_rmsk>;
-		$flanco{init}=$deletion[2];
-		$flanco{end} =$deletion[2]+$q_bases;
-		
-# 		print($flanco{init},"\t",$flanco{end},"\n");
-		
-		while($repeat[7] < $flanco{init} && ! eof($fh_rmsk)){
-			@repeat = split '\t', <$fh_rmsk>;
-# 			print($repeat[7],"\n");
-		}
-# 		print($repeat[6],"\t",$repeat[7],"\n");
-		while($repeat[6] < $flanco{end} && ! eof($fh_rmsk)){
-			if($repeat[7]>$flanco{end}){
-				$repeat[7]=$flanco{end};
+		#	Determina sobrelape
+# 		while($repeat[6] < $flanco{end} && ! eof($fh_rmsk)){
+		while($RMList[$counter][0] < $flanco{end} && $counter < $RMList_len){
+# 			if($repeat[7]>$flanco{end}){
+# 				$repeat[7]=$flanco{end};
+# 			}
+# 			
+# 			
+# 			if ($repeat[6] < $flanco{init}){
+# 				$overlap = $repeat[7] - $flanco{init};
+# 				$coord = max($repeat[7],$coord);
+# 			}elsif($repeat[6] > $coord){
+# 				$overlap += $repeat[7] - $repeat[6];
+# 				$coord = $repeat[7];
+# 			}elsif($repeat[7] > $coord){
+# 				$overlap += $repeat[7] - $coord;
+# 				$coord = $repeat[7];
+# 			}
+			if($RMList[$counter][1]>$flanco{end}){
+				$RMList[$counter][1]=$flanco{end};
 			}
 			
 			
-			if ($repeat[6] < $flanco{init}){
-				$overlap = $repeat[7] - $flanco{init};
-				$coord = max($repeat[7],$coord);
-			}elsif($repeat[6] > $coord){
-				$overlap += $repeat[7] - $repeat[6];
-				$coord = $repeat[7];
-			}elsif($repeat[7] > $coord){
-				$overlap += $repeat[7] - $coord;
-				$coord = $repeat[7];
+			if ($RMList[$counter][1] < $flanco{init}){
+				$overlap = $RMList[$counter][1] - $flanco{init};
+				$coord = max($RMList[$counter][1],$coord);
+			}elsif($RMList[$counter][0] > $coord){
+				$overlap += $RMList[$counter][1] - $RMList[$counter][0];
+				$coord = $RMList[$counter][1];
+			}elsif($RMList[$counter][1] > $coord){
+				$overlap += $RMList[$counter][1] - $coord;
+				$coord = $RMList[$counter][1];
 			}
-			
-			@repeat = split '\t', <$fh_rmsk>;
+# 			@repeat = split '\t', <$fh_rmsk>;
 		}
 		
-		close($fh_rmsk);
+# 		close($fh_rmsk);
 		
-		##	Imprimir resultado
+		## Flanco Derecho
 		
 		if($overlap < $eq_bases){
-			print($line);
-		}
 		
-	}
-	
-	close($fh_rmsk);	
-	
-	
+# 			open(my $fh_rmsk, '<:encoding(UTF-8)', $rmsk_file)
+# 			or die "Error con: '$rmsk_file' $!";
+			
+			$coord = 0;
+			$overlap = 0;
+# 			@repeat = split '\t', <$fh_rmsk>;
+			$flanco{init}=$deletion[2];
+			$flanco{end} =$deletion[2]+$q_bases;
+			
+	# 		print($flanco{init},"\t",$flanco{end},"\n");
+			
+# 			while($repeat[7] < $flanco{init} && ! eof($fh_rmsk)){
+# 				@repeat = split '\t', <$fh_rmsk>;
+# 	# 			print($repeat[7],"\n");
+# 			}
+# 	# 		print($repeat[6],"\t",$repeat[7],"\n");
+# 			while($repeat[6] < $flanco{end} && ! eof($fh_rmsk)){
+# 				if($repeat[7]>$flanco{end}){
+# 					$repeat[7]=$flanco{end};
+# 				}
+# 				
+# 				
+# 				if ($repeat[6] < $flanco{init}){
+# 					$overlap = $repeat[7] - $flanco{init};
+# 					$coord = max($repeat[7],$coord);
+# 				}elsif($repeat[6] > $coord){
+# 					$overlap += $repeat[7] - $repeat[6];
+# 					$coord = $repeat[7];
+# 				}elsif($repeat[7] > $coord){
+# 					$overlap += $repeat[7] - $coord;
+# 					$coord = $repeat[7];
+# 				}
+# 				
+# # 				@repeat = split '\t', <$fh_rmsk>;
+# 			}
+			while($RMList[$counter][0] < $flanco{init} && $counter < $RMList_len){}
+			while($RMList[$counter][0] < $flanco{end} && $counter < $RMList_len){
+				if($RMList[$counter][1]>$flanco{end}){
+					$RMList[$counter][1]=$flanco{end};
+				}
+				
+				
+				if ($RMList[$counter][1] < $flanco{init}){
+					$overlap = $RMList[$counter][1] - $flanco{init};
+					$coord = max($RMList[$counter][1],$coord);
+				}elsif($RMList[$counter][0] > $coord){
+					$overlap += $RMList[$counter][1] - $RMList[$counter][0];
+					$coord = $RMList[$counter][1];
+				}elsif($RMList[$counter][1] > $coord){
+					$overlap += $RMList[$counter][1] - $coord;
+					$coord = $RMList[$counter][1];
+				}
+			}
+			
+# 			close($fh_rmsk);
+			
+			##	Imprimir resultado
+			
+			if($overlap < $eq_bases){
+				print($line);
+			}
+			
+		}
+	}else{print ("Error con: '$rmsk_file' $!");}
 }
 

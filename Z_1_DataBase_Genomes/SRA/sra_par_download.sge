@@ -37,13 +37,15 @@
 #       n_spots             = numero de spots leidos (segun SRA)
 #       n_threads           = numero de hilos para usar en el alineamiento
 #       quality_treshold    = Phred mínimo para la edición de fastas
+#	bases_treshold      = Número de bases mínimo para no descartar
 #       HOME                = Carpeta de Trabajo (dondo se encuentra el Indx de segemehl y la subcarpeta ${name}_file)
 #       HumanRef            = Dirección del archivo de genoma de referencia para el alineamiento
 #   
 #   OUT (por cada subcarpeta):
-#       DumpANDtest$i.sge   = sge listo para obtener los comprimidos
-#       Edit$i.sge          = sge para editar por medio de fastx
-#       Alignment$i.sge     = sge listo para ejecutar de alineamiento
+#       DumpANDtest.sge   = sge listo para obtener los comprimidos
+#       Edit_Phred.sge      = sge para editar por medio de fastx
+#	Edit_common.sge     = sge para filtrar fastq con indices comunes
+#       Alignment.sge     = sge listo para ejecutar de alineamiento
 #       
 ##---------------------------------------------------------
 
@@ -104,6 +106,7 @@ for i in `seq 1 $n_th`
     
     mkdir $HOME/${name}_file/${name}_${i}
     
+    #Programa de Dump
         printf "#!/bin/bash
 # Run job through bash shell
 #\n#$ -S /bin/bash
@@ -171,10 +174,10 @@ if [[ -z \"\$gz_test\" ]]
 
 fi \n
 
-" > $HOME/${name}_file/${name}_${i}/DumpANDtest$i.sge
+" > $HOME/${name}_file/${name}_${i}/DumpANDtest.sge
 
 
-echo DumpANDtest$i creado
+echo DumpANDtest creado
 
 
 #   Creación del programa de Edición
@@ -183,7 +186,7 @@ printf "#!/bin/bash
 #\n#$ -S /bin/bash
 #
 # Your job name
-#\n#$ -N Edit$i
+#\n#$ -N Edit_Phred
 #
 # Use current working directory
 #\n#$ -cwd
@@ -211,17 +214,67 @@ module load fastqc
 
 echo Pipe Init
 
-for i in \`seq 1 \${#file_names[@]}\`
+for file in \"\${file_names[@]}\"
     do
     
-    echo \${file_names[\$i-1]}
-    name=\$(echo \${file_names[\$i-1]} | cut -f1 -d\".\" )
-    gunzip -c \${file_names[\$i-1]} | fastq_quality_trimmer -t $quality_treshold -z -v -o -l $bases_treshold \${name}_cured.fastq.gz
+    echo \${file}
+    name=\$(echo \${file} | cut -f1 -d\".\" )
+    gunzip -c \${file} | fastq_quality_trimmer -t $quality_treshold -z -v -l $bases_treshold -o \${name}_cured.fastq.gz # -i \${file} ???
     fastqc \${name}_cured.fastq.gz
     done
-\n" > $HOME/${name}_file/${name}_${i}/Edit$i.sge
+\n" > $HOME/${name}_file/${name}_${i}/Edit_Phred.sge
 
-echo Edit$i.sge creado
+echo Edit_Phred.sge creado
+
+print "#!/bin/bash
+# Run job through bash shell
+\n#$ -S /bin/bash
+#
+# Your job name
+\n#$ -N Common
+#
+# Use current working directory
+\n#$ -cwd
+#
+# Join stdout and stderr
+\n#$ -j y
+#
+# Send an email after the job has finished
+\n#$ -m e
+\n#$ -M $email
+#
+
+##---------------------------------------------------------
+#	DESCRIPCIÓN
+#   
+#
+##---------------------------------------------------------
+
+##---------------------------------------------------------
+#	TO DO LIST
+#	
+##---------------------------------------------------------
+
+
+module load seqtk
+
+########	Config Zone
+
+####	Variables de entrada
+
+
+####	Direcciones
+
+
+zcat ${name}_1_cured.fastq.gz | perl -ane 'if (m/^\@${name}\.[0-9]*/){ print substr(${F[0]},1),"\n";}' > list.txt
+seqtk subseq ${name}_2_cured.fastq.gz list.txt > ${name}_2_cured_seqtk.fastq.gz
+
+zcat ${name}_2_cured.fastq.gz | perl -ane 'if (m/^\@${name}\.[0-9]*/){ print substr(${F[0]},1),"\n";}' > list.txt
+seqtk subseq ${name}_1_cured.fastq.gz list.txt > ${name}_1_cured_seqtk.fastq.gz
+
+" > $HOME/${name}_file/${name}_${i}/Edit_common.sge
+
+echo Edit_common.sge creado
 
 #Creación del programa de alineamiento
 printf "#!/bin/bash
@@ -229,7 +282,7 @@ printf "#!/bin/bash
 #\n#$ -S /bin/bash
 #
 # Your job name
-#\n#$ -N Align_S_$i
+#\n#$ -N Align_S
 #
 # Use current working directory
 #\n#$ -cwd
@@ -264,8 +317,8 @@ segemehl.x -i $HOME/Idx_Human.idx -S -d $HumanRef -q ${name}_2_cured.fastq.gz -t
 #echo Align PE
 #segemehl.x -i $HOME/Idx_Human.idx -S -d $HumanRef -q ${name}_1_cured.fastq.gz -p ${name}_2_cured.fastq.gz -t $n_threads | samtools view -Sbh > ${name}_cured_AlS.bam
 
-" > $HOME/${name}_file/${name}_${i}/Alignment_$i.sge
+" > $HOME/${name}_file/${name}_${i}/Alignment.sge
 
-echo Alignment_$i.sge creado
+echo Alignment.sge creado
 
     done

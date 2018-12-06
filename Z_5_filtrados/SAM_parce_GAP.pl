@@ -32,9 +32,10 @@ use strict;
 use warnings;
 use Getopt::Long;
 
-my	$C_min	= 1;
+my	$C_min	= 10;
 my	$G_min	= 1;
 my	$G_max	= 100000;
+my	$Base_name = "Default";
 
 #	ABRIR ARCHIVO
 
@@ -48,7 +49,8 @@ my	$G_max	= 100000;
 
 GetOptions	('MinClev:i'=> \$C_min,
 		'MaxGap:i'=> \$G_max,
-		'MinGap:i'=> \$G_min);
+		'MinGap:i'=> \$G_min,
+		'Name:s' => \$Base_name);
 
 
 while (my $line = <STDIN>) {
@@ -61,7 +63,9 @@ while (my $line = <STDIN>) {
 		$elems[5] =~ tr/[HP]/O/;	#null
 		$elems[5] =~ tr/[ISM=X]/C/;	#Cleverage
 		my	@CIGAR = ( $elems[5] =~ m/([0-9]+[GC])/g );
-		
+		my	$Out_name = join "_", $Base_name, $elems[2],"splitreads.bed";	#	Nombre de salida = Base_name + Chr
+		open(my $fh_Out_Splitreads, '>>:encoding(UTF-8)', $Out_name)
+		or die "Error con: '$Out_name' $!"; 
 		
 		#	Máquina de estados
 		
@@ -73,11 +77,14 @@ while (my $line = <STDIN>) {
 		my	$inicio	= 0;
 		my	$fin	= 0;
 		
+			#	Completa el C2 inicial de tamaño total a los match
 		for my $i (0 .. $#CIGAR){
 			if ($CIGAR[$i] =~ m/C$/){
 				$C2 +=  substr $CIGAR[$i], 0, -1;
 			}
 		}
+		
+			#	Loop
 		
 		for my $i (0 .. $#CIGAR){
 		
@@ -120,7 +127,7 @@ while (my $line = <STDIN>) {
 					if($C1 >= $C_min && $C2 >= $C_min && $G >= $G_min && $G <= $G_max){
 						$inicio	= $elems[3] + $C1;
 						$fin	= $inicio + $G;
-						print "$elems[2]\t$inicio\t$fin\t$elems[0]\n";
+						print $fh_Out_Splitreads "$elems[2]\t$inicio\t$fin\t$elems[0]\n";
 					}
 					
 					#	RESET
@@ -135,14 +142,15 @@ while (my $line = <STDIN>) {
 			}
 			
 			#	FSM Err
-			else {print "Err if case";}
+			else {warnings::warn( "Err if case \n $line\n")}
 		}
 		
 		#	Last Step
 		if($C1 >= $C_min && $C2 >= $C_min && $G >= $G_min && $G <= $G_max){
 			$inicio	= $elems[3] + $C1;
 			$fin	= $inicio + $G;
-			print "$elems[2]\t$inicio\t$fin\t$elems[0]\n";
+			print $fh_Out_Splitreads "$elems[2]\t$inicio\t$fin\t$elems[0]\n";
 		}
+		close($fh_Out_Splitreads);
 	}
 }
