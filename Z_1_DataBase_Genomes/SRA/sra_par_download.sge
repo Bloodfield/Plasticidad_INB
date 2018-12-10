@@ -22,7 +22,7 @@
 #   DESCRIPCIÓN
 #   
 #   Este programa crea lo necesario para descargar los fastq y alinearlos
-#   Obtieene el sra y los progrmanas para descargar los split files
+#   Obtiene el sra y los programas para descargar los split files
 #   las partes están calculadas en segmentos de 900 000 000 reads
 #   Crea programas intermedios que revisan la integridad de los archivos
 #   
@@ -30,36 +30,56 @@
 #   Se tiene que ejecutar dentro de la carpeta ${name}_file
 #   Si no eres Edgar Iván Chávez Aparicio, Edita:
 #           la parte de arriba ^ (lineas 2-16)
-#           la parte de abajo  v (linea 70)
-#   
+#           la parte de abajo  v (linea 71,77)
+#
+#   Antes de Usar:
+#	Tiene que estar el genoma de referencia
+#		con su Índce de segemehl
+#	Tiene que estar la carpeta ${name}_file, con éste script dentro
+#
 #   IN:
-#       name                = nombre de acceso del SRA
-#       n_spots             = numero de spots leidos (segun SRA)
-#       n_threads           = numero de hilos para usar en el alineamiento
-#       quality_treshold    = Phred mínimo para la edición de fastas
-#	bases_treshold      = Número de bases mínimo para no descartar
-#       HOME                = Carpeta de Trabajo (dondo se encuentra el Indx de segemehl y la subcarpeta ${name}_file)
-#       HumanRef            = Dirección del archivo de genoma de referencia para el alineamiento
+#       name			=	nombre de acceso del SRA
+#       n_spots			=	numero de spots leidos (segun SRA)
+#       n_threads		=	numero de hilos para usar en el alineamiento
+#       quality_treshold	=	Phred mínimo para la edición de fasta
+#	bases_treshold		=	Número de bases mínimo por read
+#       HOME			=	Carpeta de Trabajo (dondo se encuentra el Indx de segemehl y la subcarpeta ${name}_file)
+#       GenomaRef		=	Dirección del archivo de genoma de referencia para el alineamiento
+#	IdxSegemehl		=	Nombre del Índce de genoma de segemehl
 #   
 #   OUT (por cada subcarpeta):
-#       DumpANDtest.sge   = sge listo para obtener los comprimidos
-#       Edit_Phred.sge      = sge para editar por medio de fastx
-#	Edit_common.sge     = sge para filtrar fastq con indices comunes
-#       Alignment.sge     = sge listo para ejecutar de alineamiento
+#       DumpANDtest.sge		=	sge listo para obtener los comprimidos
+#       Edit_Phred.sge		=	sge para editar por medio de fastx
+#       Alignment.sge		=	sge listo para ejecutar de alineamiento
 #       
+#   OUT (principal):
+#	${name}.sra		=	Archivo descargado de SRA
 ##---------------------------------------------------------
 
 ##---------------------------------------------------------
 #   TO DO LIST
 #   
 #   Variable de n_part_spots
-#   Divición de reads pareja
 #
-#   Guía de uso
 ##---------------------------------------------------------
 
 
-########    Config Zone
+##---------------------------------------------------------
+#   Guía de uso
+#	1.	Obtén el genoma de referencia y construye su índice de segemehl
+#		Los datos de su ubicación los necesitarás para los siguientes pasos
+#	2.	Crea el foder que se va a usar para descargar y analizar los datos
+#		Tiene que estar en tu carpeta que llames HOME,
+#			Una alternativa es usar otra carpeta, y redefinirla en el paso que sigue
+#		El nombre del folder tiene que ser ${name}_file
+#	2.	Modifica "ZONA DE CONFIGURACIÓN" con los valores requeridos
+#	3.	Has el summit de éste sga desde el folder "${name}_file"
+#		$ qsub SRA_pipe_download.sge
+#	4.	Corre los otros scripts. Estan configurados bajo los parámetros del punto 2
+##---------------------------------------------------------
+
+
+########    ZONA DE CONFIGURACIÓN
 
 name="SRR822843"
 n_spots="256263009"
@@ -70,13 +90,13 @@ bases_treshold="20"
 #Dirección padre de los archivos a usar (aquí debe estar el indice de segemehl)
 HOME="/mnt/Timina/mhernandez/echavez"
 #Dirección del genoma de referencia a usar
-HumanRef="/mnt/Archives/genome/human/hg38/UCSC/Homo_sapiens/UCSC/hg38/Sequence/WholeGenomeFasta/genome.fa"
-#Habilitación de scripts personales
-PATH=$PATH:$HOME/bin
+GenomaRef="/mnt/Archives/genome/human/hg38/UCSC/Homo_sapiens/UCSC/hg38/Sequence/WholeGenomeFasta/genome.fa"
+#Dirección del Índce de segemehl
+IdxSegemehl="$HOME/Idx_Human.idx"
 #Tu correo para ser avisado
 email="echavezaparicio@gmail.com"
 
-########    Script zone
+########    ZONA DE SCRIPT
 
 #   Calculo de hilos de descarga
 
@@ -108,37 +128,22 @@ for i in `seq 1 $n_th`
     
     #Programa de Dump
         printf "#!/bin/bash
-# Run job through bash shell
 #\n#$ -S /bin/bash
-#
-# Your job name
 #\n#$ -N DumpANDtest$i
-#
-# Use current working directory
 #\n#$ -cwd
-#
-# Join stdout and stderr
 #\n#$ -j y
-#
-# Send an email after the job has finished
 #\n#$ -m e
 #\n#$ -M $email
-#
-# If modules are needed, source modules environment (Do not delete the next line):
 . /etc/profile.d/modules.sh
 #
-# Add any modules you might require:
 module load sra
 module load fastqc
-#
-
 
 export HOME=$HOME
 
 # Obtener los archovivos del .sra
 
 fastq-dump -split-files -N ${indx_i[$i]} -X ${indx_f[$i]} -gzip -O $HOME/${name}_file/${name}_${i} $HOME/${name}_file/$name.sra
-
 
 # Control de errores
 
@@ -182,23 +187,12 @@ echo DumpANDtest creado
 
 #   Creación del programa de Edición
 printf "#!/bin/bash
-# Run job through bash shell
 #\n#$ -S /bin/bash
-#
-# Your job name
 #\n#$ -N Edit_Phred
-#
-# Use current working directory
 #\n#$ -cwd
-#
-# Join stdout and stderr
 #\n#$ -j y
-#
-# Send an email after the job has finished
 #\n#$ -m e
 #\n#$ -M $email
-#
-# If modules are needed, source modules environment (Do not delete the next line):
 . /etc/profile.d/modules.sh
 #
 ########    Config Zone
@@ -219,103 +213,37 @@ for file in \"\${file_names[@]}\"
     
     echo \${file}
     name=\$(echo \${file} | cut -f1 -d\".\" )
-    gunzip -c \${file} | fastq_quality_trimmer -t $quality_treshold -z -v -l $bases_treshold -o \${name}_cured.fastq.gz # -i \${file} ???
+    gunzip -c \${file} | fastq_quality_trimmer -t $quality_treshold -z -v -l $bases_treshold -o \${name}_cured.fastq.gz # -i \${file}
     fastqc \${name}_cured.fastq.gz
     done
 \n" > $HOME/${name}_file/${name}_${i}/Edit_Phred.sge
 
 echo Edit_Phred.sge creado
 
-print "#!/bin/bash
-# Run job through bash shell
-\n#$ -S /bin/bash
-#
-# Your job name
-\n#$ -N Common
-#
-# Use current working directory
-\n#$ -cwd
-#
-# Join stdout and stderr
-\n#$ -j y
-#
-# Send an email after the job has finished
-\n#$ -m e
-\n#$ -M $email
-#
-
-##---------------------------------------------------------
-#	DESCRIPCIÓN
-#   
-#
-##---------------------------------------------------------
-
-##---------------------------------------------------------
-#	TO DO LIST
-#	
-##---------------------------------------------------------
-
-
-module load seqtk
-
-########	Config Zone
-
-####	Variables de entrada
-
-
-####	Direcciones
-
-
-zcat ${name}_1_cured.fastq.gz | perl -ane 'if (m/^\@${name}\.[0-9]*/){ print substr(${F[0]},1),"\n";}' > list.txt
-seqtk subseq ${name}_2_cured.fastq.gz list.txt > ${name}_2_cured_seqtk.fastq.gz
-
-zcat ${name}_2_cured.fastq.gz | perl -ane 'if (m/^\@${name}\.[0-9]*/){ print substr(${F[0]},1),"\n";}' > list.txt
-seqtk subseq ${name}_1_cured.fastq.gz list.txt > ${name}_1_cured_seqtk.fastq.gz
-
-" > $HOME/${name}_file/${name}_${i}/Edit_common.sge
-
-echo Edit_common.sge creado
 
 #Creación del programa de alineamiento
 printf "#!/bin/bash
-# Run job through bash shell
 #\n#$ -S /bin/bash
-#
-# Your job name
 #\n#$ -N Align_S
-#
-# Use current working directory
 #\n#$ -cwd
-#
-# Join stdout and stderr
 #\n#$ -j y
-#
-# Send an email after the job has finished
 #\n#$ -m e
 #\n#$ -M $email
-#
-# If modules are needed, source modules environment (Do not delete the next line):
 . /etc/profile.d/modules.sh
-#
-# Add any modules you might require:
+
 module load segemehl
 module load htslib/1.2.1
 module load samtools
 
-#
-# pe (Parallel environment)request a parallel environment (MPI, OpenMP). Set your number of requested slots here.
 #\n#$ -pe openmpi $n_threads
 
 #construcción de segemehl pareado con -S
 
 echo Align 1
-segemehl.x -i $HOME/Idx_Human.idx -S -d $HumanRef -q ${name}_1_cured.fastq.gz -t $n_threads | samtools view -Sbh > ${name}_1_cured_AlS.bam
+segemehl.x -i ${IdxSegemehl} -S -d $GenomaRef -q ${name}_1_cured.fastq.gz -t $n_threads | samtools view -Sbh > ${name}_1_cured_AlS.bam
 
 echo Align 2
-segemehl.x -i $HOME/Idx_Human.idx -S -d $HumanRef -q ${name}_2_cured.fastq.gz -t $n_threads | samtools view -Sbh > ${name}_2_cured_AlS.bam
-
-#echo Align PE
-#segemehl.x -i $HOME/Idx_Human.idx -S -d $HumanRef -q ${name}_1_cured.fastq.gz -p ${name}_2_cured.fastq.gz -t $n_threads | samtools view -Sbh > ${name}_cured_AlS.bam
+segemehl.x -i ${IdxSegemehl} -S -d $GenomaRef -q ${name}_2_cured.fastq.gz -t $n_threads | samtools view -Sbh > ${name}_2_cured_AlS.bam
 
 " > $HOME/${name}_file/${name}_${i}/Alignment.sge
 

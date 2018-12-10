@@ -102,8 +102,10 @@ close($fh_rmsk);
 
 #		Masking
 my $eq_bases = $MaxPercentage*$q_bases/100;
-
-
+my $line_count = 1;
+open(my $fh_log, '>:encoding(UTF-8)', 'log.txt')
+	or die "Error con: log.txt $!";
+	
 while (my $line = <STDIN>) {
 	
 	## Flanco Izquierdo
@@ -133,7 +135,7 @@ while (my $line = <STDIN>) {
 		my $counter = 0;
 		
 		#	busca coordenadas de sobrelape
-		while($RMList[$counter][0] < $flanco{init} && $counter < $RMList_len){}
+		while($RMList[$counter][1] < $flanco{init} && $counter < $RMList_len){$counter+=1;}
 		
 		#	Determina sobrelape
 # 		while($repeat[6] < $flanco{end} && ! eof($fh_rmsk)){
@@ -240,6 +242,8 @@ while (my $line = <STDIN>) {
 			}
 			
 		}
-	}else{print ("Error con: '$rmsk_file' $!");}
+	}else{warnings::warn( "Error con: '$rmsk_file' $!");}
+	print $fh_log "Line : $line_count";
+	$line_count += 1 ;
 }
-
+close($fh_log)
