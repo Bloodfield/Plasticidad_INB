@@ -59,8 +59,7 @@
 ##---------------------------------------------------------
 #	TO DO LIST
 #	
-#	Comentar
-#	Dependencia de RM
+#	Hacer que revise la existecnia de los cats, para no hacer basura
 ##---------------------------------------------------------
 
 
@@ -75,7 +74,7 @@ percentage="20"
 #	Profundidad máxima de deleciones para integrar
 depth="3"
 #	Archivos a analizar, sin extención
-file_names=("SRR822843_1_cured_AlS" "SRR822843_2_cured_AlS")
+file_names=("SRR822843_2_cured_AlS")
 #	Habilita la creación de SGE's en caso de que ya existan
 habilita_sge=true
 #	Tamaño máximo de bloque para crear sge
@@ -156,44 +155,36 @@ for name in "${file_names[@]}"
 	
 	#	Se realiza el analisis de los CIGAR, y se crean los bed correspondientes a las deleciones
 	echo parce
-	samtools view -h $name.bam  | SAM_parce_GAP.pl -name $name
+ 	samtools view -h $name.bam  | SAM_parce_GAP.pl -name $name
 
 # 	echo search C
 # 	search_bed_sam.pl ${file_names[i]}_C.fastq.sngl.bed ${file_names[i]}.sam > ${file_names[i]}_C.fastq.sngl.sam # bed sam C
 # 	echo search B
 # 	search_bed_sam.pl ${file_names[i]}_B.fastq.sngl.bed ${file_names[i]}.sam > ${file_names[i]}_B.fastq.sngl.sam # bed sam B
 	
-	if [ $habilita_sge ]
+	if $habilita_sge
 		then
-		cd ..
-		count="1"
-		suma="0"
+		count="0"
+		suma="$max_bloque"
 		
-		printf "#!/bin/bash
-\n#$ -S /bin/bash
-\n#$ -N RM_${name}_${count}
-$HEAD
-" > RMFilter_${name}_${count}.sge
+# 		printf "#!/bin/bash\n#$ -S /bin/bash\n#$ -N RM_${name}_${count}\n$HEAD\n" > ../RMFilter_${name}_${count}.sge
 		for Chromosome in "${chr[@]}"
 			do
-			Chr_lines=$(grep -r  "rmsk_${chr[1]}.txt" $HOME/rmsk/files_lines.txt | tr -s " " | cut -f2 -d" ")
-			suma=$(($suma+$Chr_lines))
-			if ["$suma" -ge "$max_bloque"] 
+			Chr_lines=$(grep -r  "rmsk_${Chromosome}.txt" $HOME/rmsk/files_lines.txt | tr -s " " | cut -f2 -d" ")
+			suma=$(($suma + $Chr_lines))
+			echo "Chr lines : $Chr_lines , suma : $suma"
+			if ((suma > max_bloque));
 				then
 				count=$(($count + 1))
-				printf "#!/bin/bash
-\n#$ -S /bin/bash
-\n#$ -N RM_${name}_${count}
-$HEAD
-" > RMFilter_${name}_${count}.sge
+				printf "#!/bin/bash\n#$ -S /bin/bash\n#$ -N RM_${name}_${count}\n$HEAD\n" > ../RMFilter_${name}_${count}.sge
 				suma="$Chr_lines"
 				
 				fi
 			printf "
-cat /*/${name}_${Chromosome}_splitreads.bed | RMFilter $HOME/rmks/rmsk_${Chromosome}.bin ${Chr_lines} ${qbases} ${percentage} > ${name}_${Chromosome}_splitreads_RM.bed
-# | genomeCoverageBed -d -i stdin -g $HOME/bin/human.genome -max ${depth} #| CoDel.pl > ${name}_splitreads_Bloq.bed
+cat */${name}_${Chromosome}_splitreads.bed | RMFilter $HOME/rmsk/rmsk_${Chromosome}.bin ${Chr_lines} ${qbases} ${percentage} > ${name}_${Chromosome}_splitreads_RM.bed
+# | genomeCoverageBed -bg -i stdin -g $HOME/bin/human.genome -max ${depth} #| CoDel.pl > ${name}_splitreads_Bloq.bed
 #	revisar documentación de genomeCoverageBed	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-" >> RMFilter_${name}_${count}.sge
+" >> ../RMFilter_${name}_${count}.sge
 			done
 		fi
 	

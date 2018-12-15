@@ -3,7 +3,7 @@
 /*	TODO
  * 	Mejorar Caché
  * 	Hacer guía
- * 
+ * 	Funcionalizal main
  */
 #include <stdio.h>
 
@@ -16,17 +16,13 @@ int main(int argc, char *argv[]){
 	FILE *Log;
 	Log = fopen(Log_name,"a");
 	char *RM_list_name;
-	unsigned int array_length = 0;
-	unsigned int qbases= 300;
-	unsigned int percentage= 20;
+	long unsigned int array_length = 0;
+	long unsigned int qbases= 300;
+	long unsigned int percentage= 20;
 	
-	if (argc == 5){
-		fprintf(Log,"Name : %s \n",argv[1]);
-		RM_list_name=argv[1];
-		sscanf (argv[2],"%d",&array_length);
-		sscanf (argv[3],"%d",&qbases);
-		sscanf (argv[4],"%d",&percentage);
-	}else{
+// 	fprintf(Log,"Key : %s \n",argv[1]);
+	
+	if (argc != 5){
 		fprintf(Log,"Se tiene que escribir un archivo de referencia, con su número de líneas \n");
 		fprintf(Log,"$ RMFilter Referencia.bin n_lineas n_bases porcentaje  \n");
 		fprintf(Log,"Emeplo:\n");
@@ -40,6 +36,12 @@ int main(int argc, char *argv[]){
 		fprintf(Log,"\n");
 		return 1;
 	}
+	
+	fprintf(Log,"Name : %s \n",argv[1]);
+	RM_list_name=argv[1];
+	sscanf (argv[2],"%lu",&array_length);
+	sscanf (argv[3],"%lu",&qbases);
+	sscanf (argv[4],"%lu",&percentage);
 	
 	// get char array
 	
