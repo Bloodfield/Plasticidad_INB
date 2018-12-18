@@ -200,7 +200,7 @@ printf "#!/bin/bash
 file_names=(\"${name}_1.fastq.gz\" \"${name}_2.fastq.gz\")
 
 ########    Script zone
-
+module load gcc/5.1.0
 module load fastx
 module load fastqc
 

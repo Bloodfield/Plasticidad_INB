@@ -34,6 +34,7 @@ int main(int argc, char *argv[]){
 		fprintf(Log,"Y la cantidad de lineas la encuentras en \"files_lines.txt\"\n");
 		fprintf(Log,"\n");
 		fprintf(Log,"\n");
+		fclose(Log);
 		return 1;
 	}
 	
