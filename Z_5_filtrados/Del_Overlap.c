@@ -24,6 +24,8 @@ unsigned de_queue(unsigned *array,unsigned end);
 unsigned queue(unsigned *array,unsigned element, unsigned end, FILE *Log);
 int percentage_overlap(unsigned reference , unsigned query ,unsigned *flanco_A,unsigned *flanco_B);
 int err_message(FILE *Log);
+int Del_Overlap(FILE *In_file,FILE *Log,unsigned overlap_th, unsigned score_th,char *Chr);
+int add_line(FILE *In_file, unsigned *flanco_A, unsigned *flanco_B, unsigned *fin, FILE *Log);
 
 int main(int argc, char *argv[]){
 	
@@ -34,9 +36,9 @@ int main(int argc, char *argv[]){
 	unsigned score_th   = 1;
 	unsigned overlap_th = 1;
 	
-	// 	fprintf(Log,"Key : %s \n",argv[1]);
+	//	Entrada de datos
 	
-	if (argc != 4){
+	if (argc != 5){
 		err_message(Log);
 		fclose(Log);
 		return 1;
@@ -46,6 +48,7 @@ int main(int argc, char *argv[]){
 	In_file_name=argv[1];
 	sscanf (argv[2],"%u",&score_th);
 	sscanf (argv[3],"%u",&overlap_th);
+	char *Chr = argv[4];
 	
 	if(overlap_th>100){
 		fprintf(Log,"Porcentaje de overlap no válido \n");
@@ -54,49 +57,119 @@ int main(int argc, char *argv[]){
 		return 1;
 	}
 	
+	// Ejecución del programa
+	FILE *In_file;
+	In_file= fopen(In_file_name,"r");
+	if(!In_file){
+		printf("Archivo : %s no existe\n",In_file_name);
+		return 1;
+	}
+	Del_Overlap(In_file,Log,overlap_th,score_th,Chr);
+	
+	// Cierre de archivos
+	fclose(In_file);
+	fclose(Log);
+	
+	return 0;
+}
+
+//	DeQueue el primer elemento y reordena la lista
+unsigned de_queue(unsigned *array,unsigned end){
+	unsigned temp=array[0];
+	int i;
+	for (i =0 ; i< end-1; i++)
+		array[i]= array[i+1];
+	array[end-1]=0;
+	return temp;
+}
+
+//	Queue un elemento a la lista
+unsigned queue(unsigned *array,unsigned element, unsigned end, FILE *Log){
+	if(end + 1 >= Array_Size){
+		fprintf(Log,"Stack Overflow");
+		return 1;
+	}
+	
+	array[end] = element;
+	
+	return 0;
+}
+
+//	calcula el porcentaje de la referencia que es cubierta por el query
+int percentage_overlap(unsigned reference , unsigned query ,unsigned *flanco_A,unsigned *flanco_B){
+	unsigned FAR = flanco_A[reference];
+	unsigned FBR = flanco_B[reference];
+	unsigned FAQ = flanco_A[query];
+	unsigned FBQ = flanco_B[query];
+	if (FBQ < FAR || FAQ > FBR){return 0;}
+	unsigned divisor = FBR - FAR;
+	unsigned temp= 0;
+	if (FAQ < FAR){
+		if(FBQ < FBR){
+			temp = (FBQ-FAR )*100;
+		}else{
+			return 100;
+		}
+	}else{
+		if(FBQ < FBR){
+			temp = (FBQ-FAQ )*100;
+		}else{
+			temp = (FBR-FAQ )*100;
+		}
+	}
+	
+	temp /= divisor;
+	return temp;
+}
+
+int err_message(FILE *Log){
+	fprintf(Log,"Se tiene que escribir un archivo bed para analizar \n");
+	fprintf(Log,"El bed tiene que ser de un solo cromosoma, y estar ordenado de menor a mayor en base a la primera coordenada \n");
+	fprintf(Log,"$ Del_Overlap [Name.bed] overlap_th score_th Chr\n");
+	fprintf(Log,"Donde overlap_th es el porcentaje entero mínimo para decir que dos lecturas se sobrelapan y\n");
+	fprintf(Log,"\t score_th es la mínima cantidad de sobrelapes para reportar una deleción\n");
+	fprintf(Log,"\t Chr es el nombre del cromosoma que aparece en el bed de salida\n");
+	fprintf(Log,"Emeplo:\n");
+	fprintf(Log,"\n");
+	fprintf(Log,"$ Del_Overlap $HOME/Deletions_Chr1.bed 50 5 Chr1\n");
+	fprintf(Log,"\n");
+	fprintf(Log,"El output se reporta en standard output \n");
+	fprintf(Log,"\n");
+	return 0;
+}
+
+int Del_Overlap(FILE *In_file,FILE *Log,unsigned overlap_th, unsigned score_th,char *Chr){
+	
 	unsigned flanco_A[Array_Size]={0};
 	unsigned flanco_B[Array_Size]={0};
 	unsigned score[Array_Size]={0};
 	
 	unsigned fin=0;
 	
-	FILE *In_file;
-	In_file= fopen(In_file_name,"r");
-	char Dummy1[Str_len]={0};
-	char Dummy2[Str_len]={0};
-	unsigned FA,FB;
-	
-	//	Primer valor
-	if(fscanf(In_file,"%s\t%u\t%u\t%[^\n]s\n",Dummy1,&FA,&FB,Dummy2)!= 4){
+	//	Primer valor 
+	if( add_line(In_file, flanco_A, flanco_B, &fin,Log)==1){
 		fprintf(Log,"Something wrong with bed File: line 1\n");
-// 		int test =fscanf(In_file,"%s\t%u\t%u\t%[^\n]s\n",Dummy1,&FA,&FB,Dummy2);
-// 		fprintf(Log,"Next: %d\n",test);
-		fprintf(Log,"Dummy1 = %s FA = %u FB = %u Dummy2 = %s\n",Dummy1,FA,FB,Dummy2);
 		fclose(In_file);
 		err_message(Log);
 		fclose(Log);
-		return 1;
 	}
-	queue(flanco_A,FA,fin,Log);
-	queue(flanco_B,FB,fin,Log);
-	fin++;
-	
-// 	printf("FA = %u FB = %u \n",FA,FB);
 	
 	//	Segundo valor
-	if(fscanf(In_file,"%s\t%u\t%u\t%[^\n]s\n",Dummy1,&FA,&FB,Dummy2)!= 4){
-		fprintf(Log,"Something wrong with bed File: line 2\n");
-		fprintf(Log,"Dummy1 = %s FA = %u FB = %u Dummy2 = %s\n",Dummy1,FA,FB,Dummy2);
+	if( add_line(In_file, flanco_A, flanco_B, &fin,Log)==1){
+		fprintf(Log,"Something wrong with bed File: line 1\n");
 		fclose(In_file);
+		err_message(Log);
+		fclose(Log);
+	}
+	
+	if(flanco_A[fin-1] < flanco_A[fin-2]){
+		fprintf(Log,"Bed file not sorted\n");
 		err_message(Log);
 		fclose(Log);
 		return 1;
 	}
-	queue(flanco_A,FA,fin,Log);
-	queue(flanco_B,FB,fin,Log);
-	fin++;
 	
-// 	printf("FA = %u FB = %u \n",FA,FB);
+	// 	printf("FA = %u FB = %u \n",FA,FB);
 	
 	int is_EOF = 0;
 	
@@ -104,6 +177,8 @@ int main(int argc, char *argv[]){
 		int X = 1;
 		unsigned FB0= flanco_B[0];
 		unsigned FAX= flanco_A[X];
+		
+		
 		score[0]++;
 		while(FB0>FAX){
 			int perA0 = percentage_overlap(X,0,flanco_A,flanco_B);
@@ -117,29 +192,43 @@ int main(int argc, char *argv[]){
 			if(X>=fin){
 				if(is_EOF){
 					FAX = FB0;
-				}else if(fscanf(In_file,"%s\t%u\t%u\t%[^\n]s\n",Dummy1,&FA,&FB,Dummy2)!= 4){
+				}else if(add_line(In_file, flanco_A, flanco_B, &fin,Log)==1){
 					is_EOF = 1;
 					FAX = FB0;
 				}else{
-					queue(flanco_A,FA,fin,Log);
-					queue(flanco_B,FB,fin,Log);
-					fin++;
-					FAX = FA;
+					if(flanco_A[fin-1] < flanco_A[fin-2]){
+						fprintf(Log,"Bed file not sorted\n");
+						err_message(Log);
+						fclose(Log);
+						return 1;
+					}
+					FAX = flanco_A[fin-1];
 				}
 			}
 		}
-		FA = de_queue(flanco_A,fin);
-		FB = de_queue(flanco_B,fin);
+		
+		FB0= flanco_B[0];
+		FAX= flanco_A[1];
+		
+		unsigned FA0= flanco_A[0];
+		unsigned FBX= flanco_B[1];
+		
+		unsigned FA = de_queue(flanco_A,fin);
+		unsigned FB = de_queue(flanco_B,fin);
 		unsigned temp_score = de_queue(score,fin);
 		fin --;
 		
-		if (temp_score >= score_th){
-			printf("%u\t%u\t%u\n",FA,FB,temp_score);
+		if (temp_score >= score_th && FAX != FA0 && FBX != FB0){
+			printf("%s\t%u\t%u\t%u\n",Chr,FA,FB,temp_score);
+		}
+		
+		if (fin <= 1){
+			add_line(In_file, flanco_A, flanco_B, &fin,Log);
 		}
 	}
 	
-	FA = de_queue(flanco_A,fin);
-	FB = de_queue(flanco_B,fin);
+	unsigned FA = de_queue(flanco_A,fin);
+	unsigned FB = de_queue(flanco_B,fin);
 	unsigned temp_score = de_queue(score,fin);
 	fin --;
 	
@@ -147,48 +236,23 @@ int main(int argc, char *argv[]){
 		printf("%u\t%u\t%u\n",FA,FB,temp_score);
 	}
 	
-	fclose(In_file);
-	fclose(Log);
-	
 	return 0;
+	
 }
 
-unsigned de_queue(unsigned *array,unsigned end){
-	unsigned temp=array[0];
-	int i;
-	for (i =0 ; i< end-1; i++)
-		array[i]= array[i+1];
-	array[end-1]=0;
-	return temp;
-}
-
-unsigned queue(unsigned *array,unsigned element, unsigned end, FILE *Log){
-	if(end + 1 >= Array_Size){
-		fprintf(Log,"Stack Overflow");
+int add_line(FILE *In_file, unsigned *flanco_A, unsigned *flanco_B, unsigned *fin, FILE *Log){
+	
+	char Dummy1[Str_len]={0};
+	char Dummy2[Str_len]={0};
+	unsigned FA,FB;
+	
+	//	Primer valor
+	if(fscanf(In_file,"%s\t%u\t%u\t%[^\n]s\n",Dummy1,&FA,&FB,Dummy2)!= 4){
+		
 		return 1;
 	}
-	
-	array[end] = element;
-	
-	return 0;
-}
-
-int percentage_overlap(unsigned reference , unsigned query ,unsigned *flanco_A,unsigned *flanco_B){
-	
-	return 100;
-}
-
-int err_message(FILE *Log){
-	fprintf(Log,"Se tiene que escribir un archivo bed para analizar \n");
-	fprintf(Log,"El bed tiene que ser de un solo cromosoma, y estar ordenado de menor a mayor en base a la primera coordenada \n");
-	fprintf(Log,"$ Del_Overlap [Name.bed] overlap_th score_th \n");
-	fprintf(Log,"Donde overlap_th es el porcentaje entero mínimo para decir que dos lecturas se sobrelapan y\n");
-	fprintf(Log,"\t score_th es la mínima cantidad de sobrelapes para reportar una deleción\n");
-	fprintf(Log,"Emeplo:\n");
-	fprintf(Log,"\n");
-	fprintf(Log,"$ Del_Overlap $HOME/Deletions_Crh1.bed 50 5 \n");
-	fprintf(Log,"\n");
-	fprintf(Log,"El output se reporta en standard output \n");
-	fprintf(Log,"\n");
+	queue(flanco_A,FA,*fin,Log);
+	queue(flanco_B,FB,*fin,Log);
+	(*fin)++;
 	return 0;
 }

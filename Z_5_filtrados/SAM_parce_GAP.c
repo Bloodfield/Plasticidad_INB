@@ -43,6 +43,7 @@ int main(int argc, char *argv[]){
 		fprintf(Log,"Con el cual se llamarán los archivos de salida\n");
 		fprintf(Log,"\n");
 		fprintf(Log,"\n");
+		fclose(Log);
 		return 1;
 	}
 	
@@ -80,7 +81,7 @@ int main(int argc, char *argv[]){
 			output = fopen(out_name,"a");
 			
 			//	Parceo de CIGAR
-			printf("CIGAR = %s\n",CIGAR);
+// 			printf("CIGAR = %s\n",CIGAR);
 			call_GAP(output,CIGAR,inicio,n_flanco,min_gap, max_gap, Chromosome, Label);
 			
 			

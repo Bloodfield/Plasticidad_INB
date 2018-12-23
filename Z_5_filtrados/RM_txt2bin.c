@@ -18,10 +18,7 @@ int main (int argc, char *argv[]){
 	FILE *Log;
 	Log = fopen(Log_name,"a");
 	
-	if (argc == 2){
-		printf("Base name list is : %s \n",argv[1]);
-		rmsk_list=argv[1];
-	}else{
+	if (argc != 2){
 		printf("One reference list must be supplied in a file \n");
 		printf("$ RMake rmsk_List.txt  \n");
 		printf("\n");
@@ -36,12 +33,19 @@ int main (int argc, char *argv[]){
 		printf("$ rmsk_chr10  \n");
 		return 1;
 	}
+
+	printf("Base name list is : %s \n",argv[1]);
+	rmsk_list=argv[1];
 	
 	FILE *List;
 	char in_name[500] = "";
 	char out_name[500] = "";
 	
 	List = fopen(rmsk_list,"r");
+	if(!List){
+		printf("Archivo : %s no existe\n",rmsk_list);
+		return 1;
+	}
 	
 	//	Por cada uno de los nombres en la lista, hacer conversión
 	while (fscanf(List, "%s", in_name) == 1){

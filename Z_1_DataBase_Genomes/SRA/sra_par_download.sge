@@ -83,7 +83,7 @@
 
 name="SRR822843"
 n_spots="256263009"
-n_threads="32"
+n_threads="16"
 quality_treshold="20"
 bases_treshold="20"
 
@@ -141,7 +141,7 @@ module load fastqc
 
 export HOME=$HOME
 
-# Obtener los archovivos del .sra
+# Obtener los archivos del .sra
 
 fastq-dump -split-files -N ${indx_i[$i]} -X ${indx_f[$i]} -gzip -O $HOME/${name}_file/${name}_${i} $HOME/${name}_file/$name.sra
 

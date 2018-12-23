@@ -25,7 +25,8 @@ int main(int argc, char *argv[]){
 	if (argc != 5){
 		fprintf(Log,"Se tiene que escribir un archivo de referencia, con su número de líneas \n");
 		fprintf(Log,"$ RMFilter Referencia.bin n_lineas n_bases porcentaje  \n");
-		fprintf(Log,"Emeplo:\n");
+		fprintf(Log,"$ porcentaje = porcentaje máximo de bases del flanco que corresponde a un repetido \n");
+		fprintf(Log,"Ejemplo:\n");
 		fprintf(Log,"\n");
 		fprintf(Log,"$ RMFilter $HOME/rmsk_Crh1.bin 100 300 20 \n");
 		fprintf(Log,"\n");
@@ -48,6 +49,10 @@ int main(int argc, char *argv[]){
 	
 	FILE *RM_table;
 	RM_table = fopen(RM_list_name,"r");
+	if(!RM_table){
+		printf("Archivo : %s no existe\n",RM_list_name);
+		return 1;
+	}
 	
 	long unsigned int Repeats_coordenates[array_length][2];
 	int index = 0;
