@@ -19,7 +19,7 @@
 ##---------------------------------------------------------
 #	DESCRIPCIÓN
 #   
-#	Este programa crea
+#	Este programa filtra los archivos de una corrida para ser comparados con los demás
 #   
 #	Importante:
 #   
@@ -59,7 +59,6 @@
 ##---------------------------------------------------------
 #	TO DO LIST
 #	
-#	Hacer que revise la existecnia de los cats, para no hacer basura
 ##---------------------------------------------------------
 
 

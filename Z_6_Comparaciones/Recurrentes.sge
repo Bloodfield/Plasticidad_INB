@@ -1,0 +1,96 @@
+#!/bin/bash
+# Run job through bash shell
+#$ -S /bin/bash
+#
+# Your job name
+#$ -N Recurrentes
+#
+# Use current working directory
+#$ -cwd
+#
+# Join stdout and stderr
+#$ -j y
+#
+# Send an email after the job has finished
+#$ -m e
+#$ -M echavezaparicio@gmail.com
+#
+
+##---------------------------------------------------------
+#	DESCRIPCIÓN
+#   
+#	Este programa revisa las recurrencias de los bedfiles entre distintos experimentos
+#   
+#	Importante:
+#   
+#	IN:
+#
+#	OUT:
+#
+##---------------------------------------------------------
+
+##---------------------------------------------------------
+#	USO
+#	
+#
+##---------------------------------------------------------
+
+##---------------------------------------------------------
+#	TO DO LIST
+#	
+##---------------------------------------------------------
+
+declare -A Experimentos
+########	ZONA DE CONFIGURACIÓN
+
+####	Variables de entrada
+
+Experimentos["SRX257065"]="SRR822843"
+Experimentos["SRX237626"]="SRR730950"
+Experimentos["SRX1660320"]="SRR3290534,SRR3325526"
+
+#	BEDTOOLS
+# Reciprical fraction to give a overlap
+fraction="0.5"
+
+#	DIRECCIONES
+
+#Dirección padre de los archivos a usar (aquí debe estar el indice de segemehl)
+HOME="/mnt/Timina/mhernandez/echavez"
+#Habilitación de scripts personales
+PATH=$PATH:$HOME/bin
+#Tu correo para ser avisado
+email="echavezaparicio@gmail.com"
+#${name}_splitreads_Bloq.bed
+
+########	ZONA DE CÓDIGO
+
+module load gcc
+module load bedtools
+
+for i in "${!Experimentos[@]}"
+do
+IFS=',' read -ra ADDR <<< "${Experimentos[$i]}"
+for k in "${ADDR[@]}";
+do
+	temp=""
+	for j in "${!Experimentos[@]}"
+	do
+	if [ "$i" != "$j" ]
+	then 
+	IFS=',' read -ra ADDRj <<< "${Experimentos[$j]}"
+	for l in "${ADDRj[@]}";
+		do
+		temp="$temp $HOME/${l}_file/${l}_1_splitreads_Bloq.bed"
+		done
+	fi
+	done
+# 	echo -e "bedtools intersect -wa -wb \\n -a $HOME/${k}_file/${k}_splitreads_Bloq.bed \\n -b ${temp} \\n -sorted \\n -filenames \\n -r ${fraction}"
+	bedtools intersect -wa -wb \
+		-a $HOME/${k}_file/${k}_1_splitreads_Bloq.bed \
+		-b ${temp} \
+		-sorted \
+		-filenames \
+		-r ${fraction} > ${i}_${k}_Intersect.bed
+done
+done
