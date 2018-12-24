@@ -301,7 +301,7 @@ int call_GAP(FILE *output,char *CIGAR,unsigned coordenada, unsigned C_min, unsig
 					temp = 0;
 				}else if(contained(c,G_List,3)){
 					
-					printf("C1 = %u, C2 = %u, Gap = %u\n",C1,C2,G);
+// 					printf("C1 = %u, C2 = %u, Gap = %u\n",C1,C2,G);
 					//	Test -> print
 					if(C1 >= C_min && C2 >= C_min && G >= G_min && G <= G_max){
 						inicio	= coordenada + C1;

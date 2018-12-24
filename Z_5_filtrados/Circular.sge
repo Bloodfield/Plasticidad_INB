@@ -618,7 +618,6 @@ for name in "${file_names[@]}"
 	
 	#	Se realiza el analisis de los CIGAR, y se crean los bed correspondientes a las deleciones
 	echo parce
-#  	samtools view -h $name.bam  | SAM_parce_GAP.pl -name $name
 	samtools view -h $name.bam  | SAM_parce_GAP $name 10 1 100000
 # 	echo search C
 # 	search_bed_sam.pl ${file_names[i]}_C.fastq.sngl.bed ${file_names[i]}.sam > ${file_names[i]}_C.fastq.sngl.sam # bed sam C
@@ -627,34 +626,34 @@ for name in "${file_names[@]}"
 	
 	if $habilita_sge
 		then
-		count="0"
-		suma="$max_bloque"
-		
-# 		printf "#!/bin/bash\n#$ -S /bin/bash\n#$ -N RM_${name}_${count}\n$HEAD\n" > ../RMFilter_${name}_${count}.sge
+# 		count="0"
+# 		suma="$max_bloque"
+# 		
+		printf "#!/bin/bash\n#$ -S /bin/bash\n#$ -N RM_${name}_${count}\n$HEAD\n" > ../RMFilter_${name}.sge
 		for Chromosome in "${chr[@]}"
 			do
-			Chr_lines=$(grep -r  "rmsk_${Chromosome}.txt" $HOME/rmsk/files_lines.txt | tr -s " " | cut -f2 -d" ")
-			suma=$(($suma + $Chr_lines))
+ 			Chr_lines=$(grep -r  "rmsk_${Chromosome}.txt" $HOME/rmsk/files_lines.txt | tr -s " " | cut -f2 -d" ")
+# 			suma=$(($suma + $Chr_lines))
 			echo "Chr lines : $Chr_lines , suma : $suma"
-			if ((suma > max_bloque));
-				then
-				count=$(($count + 1))
-				printf "#!/bin/bash\n#$ -S /bin/bash\n#$ -N RM_${name}_${count}\n$HEAD\n" > ../RMFilter_${name}_${count}.sge
-				suma="$Chr_lines"
-				
-				fi
+# 			if ((suma > max_bloque));
+# 				then
+# 				count=$(($count + 1))
+# 				printf "#!/bin/bash\n#$ -S /bin/bash\n#$ -N RM_${name}_${count}\n$HEAD\n" > ../RMFilter_${name}_${count}.sge
+# 				suma="$Chr_lines"
+# 				
+# 				fi
 			printf "
 cat */${name}_${Chromosome}_splitreads.bed | RMFilter $HOME/rmsk/rmsk_${Chromosome}.bin ${Chr_lines} ${qbases} ${percentage} | sort -n -k2,3 > ${name}_${Chromosome}_splitreads_RM_sorted.bed
 # | genomeCoverageBed -bg -i stdin -g $HOME/bin/human.hg38.genome -max ${depth} > ${name}_${Chromosome}_splitreads_Bloq.bed #| CoDel.pl > ${name}_${Chromosome}_splitreads_Bloq.bed
 size=\$(wc -c ${name}_${Chromosome}_splitreads_RM_sorted.bed | cut -f1 -d\" \")
-if (( $size > 0 ))
+if (( \$size > 0 ))
 then
-Del_Overlap ${name}_${Chromosome}_splitreads_RM_sorted.bed ${score_min} ${overlap_percentaje} ${Chromosome} > ${name}_${Chromosome}_splitreads_Bloq.bed
+Del_Overlap ${name}_${Chromosome}_splitreads_RM_sorted.bed ${score_min} ${overlap_percentaje} ${Chromosome} >> ${name}_splitreads_Bloq.bed
 else
 rm ${name}_${Chromosome}_splitreads_RM_sorted.bed
 fi
 #	revisar la opción deseada	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-" >> ../RMFilter_${name}_${count}.sge
+" >> ../RMFilter_${name}.sge
 			done
 		fi
 	

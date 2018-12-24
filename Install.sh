@@ -2,7 +2,7 @@
 
 #	Configuración
 
-HOME="/mnt/Timina/mhernadez/echavez/"
+HOME="/mnt/Timina/mhernandez/echavez/"
 
 
 echo "Installing / Updating ..."
