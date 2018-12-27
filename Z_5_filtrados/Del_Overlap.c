@@ -17,7 +17,7 @@
 #include <string.h>
 
 #define Log_name "Log.txt"
-#define Array_Size 300
+#define Array_Size 1000
 #define Str_len 300
 
 unsigned de_queue(unsigned *array,unsigned end);
