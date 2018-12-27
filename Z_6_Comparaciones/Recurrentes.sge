@@ -55,15 +55,17 @@ fraction="0.5"
 
 #	DIRECCIONES
 
-#Dirección padre de los archivos a usar (aquí debe estar el indice de segemehl)
+# Dirección padre de los archivos a usar (aquí debe estar el indice de segemehl)
 HOME="/mnt/Timina/mhernandez/echavez"
 #Habilitación de scripts personales
 PATH=$PATH:$HOME/bin
 #Tu correo para ser avisado
 email="echavezaparicio@gmail.com"
-#${name}_splitreads_Bloq.bed
 
 ########	ZONA DE CÓDIGO
+
+# If modules are needed, source modules environment (Do not delete the next line):
+. /etc/profile.d/modules.sh
 
 module load gcc
 module load bedtools
@@ -81,13 +83,13 @@ do
 	IFS=',' read -ra ADDRj <<< "${Experimentos[$j]}"
 	for l in "${ADDRj[@]}";
 		do
-		temp="$temp $HOME/${l}_file/${l}_1_splitreads_Bloq.bed"
+		temp="$temp $HOME/${l}_file/${l}_1_cured_AlS_splitreads_Bloq.bed"
 		done
 	fi
 	done
-# 	echo -e "bedtools intersect -wa -wb \\n -a $HOME/${k}_file/${k}_splitreads_Bloq.bed \\n -b ${temp} \\n -sorted \\n -filenames \\n -r ${fraction}"
+# 	echo -e "bedtools intersect -wa -wb \\n -a $HOME/${k}_file/${k}_1_cured_AlS_splitreads_Bloq.bed \\n -b ${temp} \\n -sorted \\n -filenames \\n -r ${fraction}"
 	bedtools intersect -wa -wb \
-		-a $HOME/${k}_file/${k}_1_splitreads_Bloq.bed \
+		-a $HOME/${k}_file/${k}_1_cured_AlS_splitreads_Bloq.bed \
 		-b ${temp} \
 		-sorted \
 		-filenames \

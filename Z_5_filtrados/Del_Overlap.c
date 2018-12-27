@@ -64,7 +64,9 @@ int main(int argc, char *argv[]){
 		printf("Archivo : %s no existe\n",In_file_name);
 		return 1;
 	}
-	Del_Overlap(In_file,Log,overlap_th,score_th,Chr);
+	unsigned Overflow = Del_Overlap(In_file,Log,overlap_th,score_th,Chr);
+	
+	if (Overflow==1){return 1;}
 	
 	// Cierre de archivos
 	fclose(In_file);
@@ -86,7 +88,7 @@ unsigned de_queue(unsigned *array,unsigned end){
 //	Queue un elemento a la lista
 unsigned queue(unsigned *array,unsigned element, unsigned end, FILE *Log){
 	if(end + 1 >= Array_Size){
-		fprintf(Log,"Stack Overflow");
+		fprintf(Log,"Err = Stack Overflow\n");
 		return 1;
 	}
 	
@@ -172,6 +174,7 @@ int Del_Overlap(FILE *In_file,FILE *Log,unsigned overlap_th, unsigned score_th,c
 	// 	printf("FA = %u FB = %u \n",FA,FB);
 	
 	int is_EOF = 0;
+	unsigned Overflow = 0;
 	
 	while(fin > 1){
 		int X = 1;
@@ -192,7 +195,7 @@ int Del_Overlap(FILE *In_file,FILE *Log,unsigned overlap_th, unsigned score_th,c
 			if(X>=fin){
 				if(is_EOF){
 					FAX = FB0;
-				}else if(add_line(In_file, flanco_A, flanco_B, &fin,Log)==1){
+				}else if((Overflow = add_line(In_file, flanco_A, flanco_B, &fin,Log))==1){
 					is_EOF = 1;
 					FAX = FB0;
 				}else{
@@ -218,13 +221,16 @@ int Del_Overlap(FILE *In_file,FILE *Log,unsigned overlap_th, unsigned score_th,c
 		unsigned temp_score = de_queue(score,fin);
 		fin --;
 		
+		if (Overflow == 2){return 1;}
+		
 		if (temp_score >= score_th && FAX != FA0 && FBX != FB0){
 			printf("%s\t%u\t%u\t%u\n",Chr,FA,FB,temp_score);
 		}
 		
 		if (fin <= 1){
-			add_line(In_file, flanco_A, flanco_B, &fin,Log);
+			Overflow = add_line(In_file, flanco_A, flanco_B, &fin,Log);
 		}
+		if (Overflow == 2){return 1;}
 	}
 	
 	unsigned FA = de_queue(flanco_A,fin);
@@ -245,14 +251,17 @@ int add_line(FILE *In_file, unsigned *flanco_A, unsigned *flanco_B, unsigned *fi
 	char Dummy1[Str_len]={0};
 	char Dummy2[Str_len]={0};
 	unsigned FA,FB;
+	unsigned Overflow= 0;
 	
 	//	Primer valor
 	if(fscanf(In_file,"%s\t%u\t%u\t%[^\n]s\n",Dummy1,&FA,&FB,Dummy2)!= 4){
 		
 		return 1;
 	}
-	queue(flanco_A,FA,*fin,Log);
-	queue(flanco_B,FB,*fin,Log);
+	Overflow =  queue(flanco_A,FA,*fin,Log);
+	Overflow += queue(flanco_B,FB,*fin,Log);
 	(*fin)++;
+	if (Overflow > 0){return  2;}
+	
 	return 0;
 }
