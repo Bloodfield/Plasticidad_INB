@@ -71,7 +71,7 @@ qbases="300"
 #	porcentaje de sobrelape para repeat masker
 percentage="20"
 #	Archivos a analizar, sin extención
-file_names=("SRR3325526_1_cured_AlS" "SRR3325526_2_cured_AlS")
+file_names=("SRR3290534")
 #	Habilita la creación de SGE's en caso de que ya existan
 habilita_sge=true
 #	Tamaño máximo de bloque para crear sge
@@ -617,7 +617,9 @@ for name in "${file_names[@]}"
 	
 	#	Se realiza el analisis de los CIGAR, y se crean los bed correspondientes a las deleciones
 	echo parce
-	samtools view -h $name.bam  | SAM_parce_GAP $name 10 1 100000
+	#if (paired separated)
+	samtools view -h ${name}_1_cured_AlS.bam  | SAM_parce_GAP $name 10 1 100000
+	samtools view -h ${name}_2_cured_AlS.bam  | SAM_parce_GAP $name 10 1 100000
 # 	echo search C
 # 	search_bed_sam.pl ${file_names[i]}_C.fastq.sngl.bed ${file_names[i]}.sam > ${file_names[i]}_C.fastq.sngl.sam # bed sam C
 # 	echo search B
@@ -628,12 +630,12 @@ for name in "${file_names[@]}"
 # 		count="0"
 # 		suma="$max_bloque"
 # 		
-		printf "#!/bin/bash\n#$ -S /bin/bash\n#$ -N RM_${name}_${count}\n$HEAD\n" > ../RMFilter_${name}.sge
+		printf "#!/bin/bash\n#$ -S /bin/bash\n#$ -N RM_${name}\n$HEAD\n" > ../RMFilter_${name}.sge
 		for Chromosome in "${chr[@]}"
 			do
  			Chr_lines=$(grep -r  "rmsk_${Chromosome}.txt" $HOME/rmsk/files_lines.txt | tr -s " " | cut -f2 -d" ")
 # 			suma=$(($suma + $Chr_lines))
-			echo "Chr lines : $Chr_lines , suma : $suma"
+# 			echo "Chr lines : $Chr_lines "
 # 			if ((suma > max_bloque));
 # 				then
 # 				count=$(($count + 1))
@@ -642,10 +644,12 @@ for name in "${file_names[@]}"
 # 				
 # 				fi
 			printf "
-cat */${name}_${Chromosome}_splitreads.bed | RMFilter $HOME/rmsk/rmsk_${Chromosome}.bin ${Chr_lines} ${qbases} ${percentage} | sort -n -k2,3 > ${name}_${Chromosome}_splitreads_RM_sorted.bed
-# | genomeCoverageBed -bg -i stdin -g $HOME/bin/human.hg38.genome -max ${depth} > ${name}_${Chromosome}_splitreads_Bloq.bed #| CoDel.pl > ${name}_${Chromosome}_splitreads_Bloq.bed
+cat */${name}_${Chromosome}_splitreads.bed | \
+RMFilter $HOME/rmsk/rmsk_${Chromosome}.bin ${Chr_lines} ${qbases} ${percentage} | \
+sort -n -k2,3 > ${name}_${Chromosome}_splitreads_RM_sorted.bed
+
 size=\$(wc -c ${name}_${Chromosome}_splitreads_RM_sorted.bed | cut -f1 -d\" \")
-if (( \$size > 0 ))
+if (( \$size > 2 ))
 then
 Del_Overlap ${name}_${Chromosome}_splitreads_RM_sorted.bed ${score_min} ${overlap_percentaje} ${Chromosome} >> ${name}_splitreads_Bloq.bed
 else

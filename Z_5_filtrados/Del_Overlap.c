@@ -17,7 +17,7 @@
 #include <string.h>
 
 #define Log_name "Log.txt"
-#define Array_Size 1000
+#define Array_Size 100000
 #define Str_len 300
 
 unsigned de_queue(unsigned *array,unsigned end);
@@ -131,7 +131,7 @@ int err_message(FILE *Log){
 	fprintf(Log,"Donde overlap_th es el porcentaje entero mínimo para decir que dos lecturas se sobrelapan y\n");
 	fprintf(Log,"\t score_th es la mínima cantidad de sobrelapes para reportar una deleción\n");
 	fprintf(Log,"\t Chr es el nombre del cromosoma que aparece en el bed de salida\n");
-	fprintf(Log,"Emeplo:\n");
+	fprintf(Log,"Ejemplo:\n");
 	fprintf(Log,"\n");
 	fprintf(Log,"$ Del_Overlap $HOME/Deletions_Chr1.bed 50 5 Chr1\n");
 	fprintf(Log,"\n");
@@ -149,7 +149,7 @@ int Del_Overlap(FILE *In_file,FILE *Log,unsigned overlap_th, unsigned score_th,c
 	unsigned fin=0;
 	
 	//	Primer valor 
-	if( add_line(In_file, flanco_A, flanco_B, &fin,Log)==1){
+	if( add_line(In_file, flanco_A, flanco_B, &fin,Log)>=1){
 		fprintf(Log,"Something wrong with bed File: line 1\n");
 		fclose(In_file);
 		err_message(Log);
@@ -157,7 +157,7 @@ int Del_Overlap(FILE *In_file,FILE *Log,unsigned overlap_th, unsigned score_th,c
 	}
 	
 	//	Segundo valor
-	if( add_line(In_file, flanco_A, flanco_B, &fin,Log)==1){
+	if( add_line(In_file, flanco_A, flanco_B, &fin,Log)>=1){
 		fprintf(Log,"Something wrong with bed File: line 1\n");
 		fclose(In_file);
 		err_message(Log);
