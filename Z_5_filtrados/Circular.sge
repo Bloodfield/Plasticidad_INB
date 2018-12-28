@@ -648,7 +648,7 @@ cat */${name}_${Chromosome}_splitreads.bed | \
 RMFilter $HOME/rmsk/rmsk_${Chromosome}.bin ${Chr_lines} ${qbases} ${percentage} | \
 sort -n -k2,3 > ${name}_${Chromosome}_splitreads_RM_sorted.bed
 
-size=\$(wc -c ${name}_${Chromosome}_splitreads_RM_sorted.bed | cut -f1 -d\" \")
+size=\$(wc -l ${name}_${Chromosome}_splitreads_RM_sorted.bed | cut -f1 -d\" \")
 if (( \$size > 2 ))
 then
 Del_Overlap ${name}_${Chromosome}_splitreads_RM_sorted.bed ${score_min} ${overlap_percentaje} ${Chromosome} >> ${name}_splitreads_Bloq.bed

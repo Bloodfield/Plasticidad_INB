@@ -154,6 +154,7 @@ int Del_Overlap(FILE *In_file,FILE *Log,unsigned overlap_th, unsigned score_th,c
 		fclose(In_file);
 		err_message(Log);
 		fclose(Log);
+		return 1;
 	}
 	
 	//	Segundo valor
@@ -162,6 +163,7 @@ int Del_Overlap(FILE *In_file,FILE *Log,unsigned overlap_th, unsigned score_th,c
 		fclose(In_file);
 		err_message(Log);
 		fclose(Log);
+		return 1;
 	}
 	
 	if(flanco_A[fin-1] < flanco_A[fin-2]){
