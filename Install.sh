@@ -21,6 +21,6 @@ gcc -o ../Del_Overlap Z_5_filtrados/Del_Overlap.c
 #	copiar sge's en la carpeta HOME
 
 cp Z_1_DataBase_Genomes/SRA/sra_par_download.sge $HOME/sra_pipe_download.sge
-cp Z_5_filtrados/Circular.sge Filter.sge
+cp Z_5_filtrados/Circular.sge $HOME/Filter.sge
 
 echo Finish
