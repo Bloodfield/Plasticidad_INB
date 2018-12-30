@@ -241,7 +241,7 @@ int Del_Overlap(FILE *In_file,FILE *Log,unsigned overlap_th, unsigned score_th,c
 	fin --;
 	
 	if (temp_score > score_th){
-		printf("%u\t%u\t%u\n",FA,FB,temp_score);
+		printf("%s\t%u\t%u\t%u\n",Chr,FA,FB,temp_score);
 	}
 	
 	return 0;

@@ -93,6 +93,6 @@ do
 		-b ${temp} \
 		-sorted \
 		-filenames \
-		-r ${fraction} > ${i}_${k}_Intersect.bed
+		-f ${fraction} -r > ${i}_${k}_Intersect.bed
 done
 done
