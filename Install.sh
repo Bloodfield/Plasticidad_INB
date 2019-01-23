@@ -12,6 +12,7 @@ echo "Installing / Updating ..."
 gcc -o ../SAM_parce_GAP Z_5_filtrados/SAM_parce_GAP.c
 gcc -o ../RMFilter Z_5_filtrados/RMFilter.c
 gcc -o ../Del_Overlap Z_5_filtrados/Del_Overlap.c
+gcc -o ../Allelic_Filter Z_6_Comparaciones/Allelic_Filter.c
 #gcc -o ../RM_txt2bin Z_5_filtrados/RM_txt2bin.c
 
 #	Obtener base de datos de Repeat Masker

@@ -1,0 +1,34 @@
+#!/bin/bash
+# Run job through bash shell
+#$ -S /bin/bash
+#
+# Your job name
+#$ -N Landscape
+#
+# Use current working directory
+#$ -cwd
+#
+# Join stdout and stderr
+#$ -j y
+#
+# Send an email after the job has finished
+#$ -m e
+#$ -M echavezaparicio@gmail.com
+#
+# If modules are needed, source modules environment (Do not delete the next line):
+. /etc/profile.d/modules.sh
+
+
+name="SRR822853"
+
+#Dirección padre de los archivos a usar (aquí debe estar el indice de segemehl)
+HOME="/mnt/Timina/mhernandez/echavez"
+#Habilitación de scripts personales
+PATH=$PATH:$HOME/bin
+
+
+module load htslib/1.2.1
+module load samtools
+
+
+samtools view - L Uniq_del_4BAM.bed ${name}_1_cured_AlS_sorted.bam > ${name}_1_cured_AlS_view.bam
