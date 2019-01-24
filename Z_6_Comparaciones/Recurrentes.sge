@@ -94,5 +94,36 @@ do
 		-sorted \
 		-filenames \
 		-f ${fraction} -r > ${i}_${k}_Intersect.bed
+	
+	#	revisa cuantos experimentos avalan las deleciones en ${i}_${k}_Intersect.bed
+	cut -f1-5 ${i}_${k}_Intersect.bed | uniq | cut -f1-3 | uniq -c  > ${i}_${k}_Freq.bed
+
+	#	después se revisa la frecuencia de intersectados
+	cat ${i}_${k}_Freq.bed | tr -s " " | cut -d" " -f2 | sort -k1n | uniq -c > ${i}_${k}_Freq_numExp.txt
+# 	cat ${i}_${k}_Freq_numExp.txt
+	#	Obtinene las longitudes de cada deleción 
+	awk -v OFS='\t' '{print $2,$3,$4,$4-$3}' ${i}_${k}_Freq.bed > ${i}_${k}_uniq_Len.bed
+
+	#	Se obtienen las frecuencias de longitudes
+	cut -f4  ${i}_${k}_uniq_Len.bed | sort -n | uniq -c > ${i}_${k}_uniq_Len_Freq.txt
+# 	cat ${i}_${k}_uniqLen_Freq.txt
 done
 done
+
+#	Obtiene todas las deleciones presentes en al menos 2 experimentos
+cat *_Freq.bed | tr -s " " | cut -d" " -f3- | sort -k1,1 -k1.4n -k2,3n | uniq > Deletions_Uniq.bed
+
+#	Ontiene las deleciones junto con el rango de los flancos a 20 nt
+awk -v OFS='\t' '{print $1,$2-20,$3+20}' Deletions_Uniq.bed  > Deletions_AndFlanc.bed
+
+#	Obtiene las longitudes
+awk -v OFS='\t' '{print $2,$3,$4,$4-$3}' Deletions_Uniq.bed > Deletions_Uniq_Len.bed
+
+#	Se obtienen las frecuencias de longitudes
+cut -f4  Deletions_Uniq_Len.bed | sort -n | uniq -c > Deletions_Uniq_Len_Freq.bed
+
+#	Revisar que todo sirve, y si es necesario o ya se tiene el sort
+# module load htslib/1.2.1
+# module load samtools
+# 
+# samtools view -L Deletions_Uniq.bed

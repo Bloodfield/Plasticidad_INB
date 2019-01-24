@@ -74,13 +74,13 @@ int main(int argc, char *argv[]){
 		float ratio=0.0;
 		char Chr[500]={0};
 		
-		if(fscanf(flanco_izquierdo_fh,"%s\t%u\t%u\t%u\n",Chr,&inicio,&fin,&cover_score_left)!= 4){
+		if(fscanf(flanco_izquierdo_fh,"%u\n",&cover_score_left)!= 1){
 			fprintf(Log,"Archivo : %s is not a BED format\n",flanco_izquierdo);
 			fclose(Log);
 			return 1;
 		}
 		
-		if(fscanf(flanco_derecho_fh,"%s\t%u\t%u\t%u\n",Chr,&inicio,&fin,&cover_score_right)!= 4){
+		if(fscanf(flanco_derecho_fh,"%u\n",&cover_score_right)!= 1){
 			fprintf(Log,"Archivo : %s is not a BED format\n",flanco_derecho);
 			fclose(Log);
 			return 1;
@@ -121,16 +121,19 @@ int print_help(FILE *Log){
 	fprintf(Log,"Allelic_Filter se utiliza para computar la razon de deleción local a un intervalo localizado \n");
 	fprintf(Log,"Su uso es: \n");
 	fprintf(Log," \n");
-	fprintf(Log,"$ Allelic_Filter Archivo_con_deleciones.bed Archivo_con_flanco_izquierdo.bed Archivo_con_flanco_derecho.bed \n");
+	fprintf(Log,"$ Allelic_Filter Archivo_con_deleciones.bed Covertura_Izquierda Covertura_Derecha th \n");
 	fprintf(Log," \n");
 	fprintf(Log," Los archivos de entrada contienen las coordenadas y la covertura total\n");
 	fprintf(Log," Estos se obtienen con la herremienta \"samtools bedcov -j\" de samtools.\n");
 	fprintf(Log," \n");
 	fprintf(Log," Los flancos tienen que ser de 20 nt de longitud\n");
 	fprintf(Log," \n");
+	fprintf(Log," th es el umbral para detectar los orígenes germinales o allelicos\n");
+	fprintf(Log," Es un número flotante que indica la olgura de las razones para asumir que se encuentra dentro del rango de deleción somática o alélica\n");
+	fprintf(Log," \n");
 	fprintf(Log,"Ejemplo:\n");
 	fprintf(Log,"\n");
-	fprintf(Log,"$ Allelic_Filter coverarge_del.bed coverarge_left.bed coverarge_right.bed \n");
+	fprintf(Log,"$ Allelic_Filter coverarge_del.bed coverarge_left coverarge_right 0.025 \n");
 	fprintf(Log,"\n");
 	return 0;
 }
