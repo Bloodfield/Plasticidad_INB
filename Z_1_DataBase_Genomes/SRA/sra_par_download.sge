@@ -47,12 +47,10 @@
 #       GenomaRef		=	Dirección del archivo de genoma de referencia para el alineamiento
 #	IdxSegemehl		=	Nombre del Índce de genoma de segemehl
 #   
-#   OUT (por cada subcarpeta):
+#   OUT:
 #       DumpANDtest.sge		=	sge listo para obtener los comprimidos
 #       Edit_Phred.sge		=	sge para editar por medio de fastx
 #       Alignment.sge		=	sge listo para ejecutar de alineamiento
-#       
-#   OUT (principal):
 #	${name}.sra		=	Archivo descargado de SRA
 ##---------------------------------------------------------
 
@@ -98,19 +96,6 @@ email="echavezaparicio@gmail.com"
 
 ########    ZONA DE SCRIPT
 
-#   Calculo de hilos de descarga
-
-n_th=$(($n_spots / 900000000 +1))
-
-echo $n_th threads to use
-
-for i in `seq 1 $n_th`
-    do
-                indx_i[$i]=$((($i-1)*900000000 +1))
-                indx_f[$i]=$((($i)*900000000))
-    done 
-indx_f[$n_th]=$n_spots
-
 #   Descarga del SRA
 
 wget ftp://ftp-trace.ncbi.nih.gov/sra/sra-instant/reads/ByRun/sra/${name:0:3}/${name:0:6}/$name/$name.sra
@@ -119,17 +104,9 @@ echo $name downloaded
 
 #   fastq-dump
 
-for i in `seq 1 $n_th`
-    do
-    
-    #crear folder
-    
-    mkdir $HOME/${name}_file/${name}_${i}
-    
-    #Programa de Dump
-        printf "#!/bin/bash
+printf "#!/bin/bash
 #\n#$ -S /bin/bash
-#\n#$ -N DumpANDtest$i
+#\n#$ -N DumpANDtest
 #\n#$ -cwd
 #\n#$ -j y
 #\n#$ -m e
@@ -141,17 +118,19 @@ module load fastqc
 
 export HOME=$HOME
 
+echo init
+
 # Obtener los archivos del .sra
 
-fastq-dump -split-files -N ${indx_i[$i]} -X ${indx_f[$i]} -gzip -O $HOME/${name}_file/${name}_${i} $HOME/${name}_file/$name.sra
+fastq-dump -split-files -gzip -O $HOME/${name}_file $HOME/${name}_file/$name.sra
 
 # Control de errores
 
-echo gzip tail de ${name}${i}_1
-zcat ${name}_1.fastq.gz | tail -n40 > ${name}${i}/tail_1.txt
+echo gzip tail de ${name}_1
+zcat ${name}_1.fastq.gz | tail -n40 > tail_1.txt
 
-echo gzip tail de ${name}${i}_2
-zcat ${name}_2.fastq.gz | tail -n40 > ${name}${i}/tail_2.txt
+echo gzip tail de ${name}_2
+zcat ${name}_2.fastq.gz | tail -n40 > tail_2.txt
 
 # Revisa los comprimidos, si estan bien, -> fastqc
 
@@ -179,14 +158,16 @@ if [[ -z \"\$gz_test\" ]]
 
 fi \n
 
-" > $HOME/${name}_file/${name}_${i}/DumpANDtest.sge
+echo end
+
+" > $HOME/${name}_file/DumpANDtest.sge
 
 
 echo DumpANDtest creado
 
 
 #   Creación del programa de Edición
-printf "#!/bin/bash
+printf " #!/bin/bash
 #\n#$ -S /bin/bash
 #\n#$ -N Edit_Phred
 #\n#$ -cwd
@@ -197,26 +178,41 @@ printf "#!/bin/bash
 #
 ########    Config Zone
 
-file_names=(\"${name}_1.fastq.gz\" \"${name}_2.fastq.gz\")
+name=\"${name}\" 
 
 ########    Script zone
 module load gcc/5.1.0
 module load fastx
 module load fastqc
+module load seqtk
 
-#   Calculo de hilos de descarga
+#   Curado
 
 echo Pipe Init
 
-for file in \"\${file_names[@]}\"
-    do
-    
-    echo \${file}
-    name=\$(echo \${file} | cut -f1 -d\".\" )
-    gunzip -c \${file} | fastq_quality_trimmer -t $quality_treshold -z -v -l $bases_treshold -o \${name}_cured.fastq.gz # -i \${file}
-    fastqc \${name}_cured.fastq.gz
-    done
-\n" > $HOME/${name}_file/${name}_${i}/Edit_Phred.sge
+#	Corte de lecturas
+
+gunzip -c ${name}_1.fastq.gz | fastq_quality_trimmer -t $quality_treshold -z -v -l $bases_treshold -o ${name}_1_cured.fastq.gz
+gunzip -c ${name}_2.fastq.gz | fastq_quality_trimmer -t $quality_treshold -z -v -l $bases_treshold -o ${name}_2_cured.fastq.gz
+
+
+#	Obtencion de lecturas iguales
+
+zcat ${name}_1_cured.fastq.gz | perl -ane 'if (m/^\@${name}\.[0-9]*/){ print substr(\${F[0]},1),\"\\\n\";}' > list.txt
+seqtk subseq ${name}_2_cured.fastq.gz list.txt | gzip > ${name}_2_cured_seqtk.fastq.gz
+
+zcat ${name}_2_cured.fastq.gz | perl -ane 'if (m/^\@${name}\.[0-9]*/){ print substr(\${F[0]},1),\"\\\n\";}' > list.txt
+seqtk subseq ${name}_1_cured.fastq.gz list.txt | gzip > ${name}_1_cured_seqtk.fastq.gz
+
+
+#	Fastqc para probar resultado
+
+fastqc ${name}_1_cured_seqtk.fastq.gz
+fastqc ${name}_2_cured_seqtk.fastq.gz
+
+echo end
+
+\n" > $HOME/${name}_file/Edit_Phred.sge
 
 echo Edit_Phred.sge creado
 
@@ -231,7 +227,7 @@ printf "#!/bin/bash
 #\n#$ -M $email
 . /etc/profile.d/modules.sh
 
-module load segemehl
+module load segemehl/0.11
 module load htslib/1.2.1
 module load samtools
 
@@ -239,13 +235,15 @@ module load samtools
 
 #construcción de segemehl pareado con -S
 
-echo Align 1
-segemehl.x -i ${IdxSegemehl} -S -d $GenomaRef -q ${name}_1_cured.fastq.gz -t $n_threads | samtools view -Sbh > ${name}_1_cured_AlS.bam
+echo Align Paired
+segemehl.x -i ${IdxSegemehl} -S -d $GenomaRef -q ${name}_1_cured_seqtk.fastq.gz -p ${name}_2_cured_seqtk.fastq.gz -t $n_threads |  \
+	samtools sort -o ${name}_sorted.bam
+	samtools index ${name}_sorted.bam
+> ${name}.bam
 
-echo Align 2
-segemehl.x -i ${IdxSegemehl} -S -d $GenomaRef -q ${name}_2_cured.fastq.gz -t $n_threads | samtools view -Sbh > ${name}_2_cured_AlS.bam
+echo end
 
-" > $HOME/${name}_file/${name}_${i}/Alignment.sge
+" > $HOME/${name}_file/Alignment.sge
 
 echo Alignment.sge creado
 

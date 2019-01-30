@@ -45,13 +45,15 @@ declare -A Experimentos
 
 ####	Variables de entrada
 
-Experimentos["SRX257065"]="SRR822843"
-Experimentos["SRX237626"]="SRR730950"
-Experimentos["SRX1660320"]="SRR3290534,SRR3325526"
+Experimentos=("SRR822853" "SRR730950" "SRR3290534")
 
 #	BEDTOOLS
 # Reciprical fraction to give a overlap
 fraction="0.5"
+
+#	SamView
+# umbral para representar datos
+th="9"
 
 #	DIRECCIONES
 
@@ -70,60 +72,68 @@ email="echavezaparicio@gmail.com"
 module load gcc
 module load bedtools
 
-for i in "${!Experimentos[@]}"
-do
-IFS=',' read -ra ADDR <<< "${Experimentos[$i]}"
-for k in "${ADDR[@]}";
+for k in "${Experimentos[@]}"
 do
 	temp=""
-	for j in "${!Experimentos[@]}"
+	for l in "${Experimentos[@]}"
 	do
-	if [ "$i" != "$j" ]
-	then 
-	IFS=',' read -ra ADDRj <<< "${Experimentos[$j]}"
-	for l in "${ADDRj[@]}";
-		do
+	if [ "$k" != "$l" ]
+		then 
 		temp="$temp $HOME/${l}_file/${l}_1_cured_AlS_splitreads_Bloq.bed"
-		done
-	fi
+		fi
 	done
-# 	echo -e "bedtools intersect -wa -wb \\n -a $HOME/${k}_file/${k}_1_cured_AlS_splitreads_Bloq.bed \\n -b ${temp} \\n -sorted \\n -filenames \\n -r ${fraction}"
 	bedtools intersect -wa -wb \
 		-a $HOME/${k}_file/${k}_1_cured_AlS_splitreads_Bloq.bed \
 		-b ${temp} \
 		-sorted \
 		-filenames \
-		-f ${fraction} -r > ${i}_${k}_Intersect.bed
+		-f ${fraction} -r > ${k}_Intersect.bed
 	
 	#	revisa cuantos experimentos avalan las deleciones en ${i}_${k}_Intersect.bed
-	cut -f1-5 ${i}_${k}_Intersect.bed | uniq | cut -f1-3 | uniq -c  > ${i}_${k}_Freq.bed
+	#	Si se rcambia Del_Overlap, entonces puede que no sea necesario el primer cut
+	cut -f1-5 ${k}_Intersect.bed | uniq | cut -f1-3 | uniq -c  > ${k}_Freq.bed
 
 	#	después se revisa la frecuencia de intersectados
-	cat ${i}_${k}_Freq.bed | tr -s " " | cut -d" " -f2 | sort -k1n | uniq -c > ${i}_${k}_Freq_numExp.txt
-# 	cat ${i}_${k}_Freq_numExp.txt
+	cat ${k}_Freq.bed | tr -s " " | cut -d" " -f2 | sort -k1n | uniq -c > ${k}_Freq_numExp.txt
 	#	Obtinene las longitudes de cada deleción 
-	awk -v OFS='\t' '{print $2,$3,$4,$4-$3}' ${i}_${k}_Freq.bed > ${i}_${k}_uniq_Len.bed
+	awk -v OFS='\t' '{print $2,$3,$4,$4-$3}' ${k}_Freq.bed > ${k}_Len.bed
 
 	#	Se obtienen las frecuencias de longitudes
-	cut -f4  ${i}_${k}_uniq_Len.bed | sort -n | uniq -c > ${i}_${k}_uniq_Len_Freq.txt
-# 	cat ${i}_${k}_uniqLen_Freq.txt
-done
+	cut -f4  ${k}_Len.bed | sort -n | uniq -c > ${k}_Len_Freq.txt
 done
 
 #	Obtiene todas las deleciones presentes en al menos 2 experimentos
 cat *_Freq.bed | tr -s " " | cut -d" " -f3- | sort -k1,1 -k1.4n -k2,3n | uniq > Deletions_Uniq.bed
 
-#	Ontiene las deleciones junto con el rango de los flancos a 20 nt
-awk -v OFS='\t' '{print $1,$2-20,$3+20}' Deletions_Uniq.bed  > Deletions_AndFlanc.bed
-
 #	Obtiene las longitudes
-awk -v OFS='\t' '{print $2,$3,$4,$4-$3}' Deletions_Uniq.bed > Deletions_Uniq_Len.bed
+awk -v OFS='\t' '{print $1,$2,$3,$3-$2}' Deletions_Uniq.bed > Deletions_Uniq_Len.bed
 
 #	Se obtienen las frecuencias de longitudes
-cut -f4  Deletions_Uniq_Len.bed | sort -n | uniq -c > Deletions_Uniq_Len_Freq.bed
+cut -f4  Deletions_Uniq_Len.bed | sort -n | uniq -c > Deletions_Uniq_Len_Freq.txt
 
-#	Revisar que todo sirve, y si es necesario o ya se tiene el sort
-# module load htslib/1.2.1
-# module load samtools
-# 
-# samtools view -L Deletions_Uniq.bed
+#	Se obtienen las deleciones que superen el umbral de muestra	# tem 9, pero hay que automatizar 
+awk -v OFS='\t' -v th="${th}" '{if ($3-$2 >= th) print $1,$2,$3}' Deletions_Uniq.bed  > Deletions_View.bed
+#	Obtiene las deleciones junto con el rango de los flancos a 20 nt
+awk -v OFS='\t' '{print $1,$2-20,$3+20}' Deletions_View.bed  > Deletions_ViewAndFlanc.bed
+
+#	Cuchareo de Merge
+bedtools merge -i Deletions_ViewAndFlanc.bed > Deletions_ViewAndFlanc_merge.bed
+rm Deletions_ViewAndFlanc.bed
+mv Deletions_ViewAndFlanc_merge.bed Deletions_ViewAndFlanc.bed
+
+module load htslib/1.2.1
+module load samtools
+
+for k in "${Experimentos[@]}"
+do
+	samtools view -L Deletions_ViewAndFlanc.bed $HOME/${k}_file/${k}_1_sorted.bam -o ${k}_view.bam
+	
+	samtools index ${k}_view.bam
+	export DISPLAY=:0.0
+	java -mx512m -jar $HOME/bin/BamView_v1.2.11.jar -a ${k}_view.bam
+# 	samtools sort -o ${k}_view_sort.bam ${k}_view.bam
+# 	samtools index ${k}_view_sort.bam
+#	export DISPLAY=:0.0
+# 	java -mx512m -jar $HOME/bin/BamView.jar -a ${k}_view_sort.bam
+	
+done
