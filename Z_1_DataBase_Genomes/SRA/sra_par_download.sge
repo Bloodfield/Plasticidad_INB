@@ -236,10 +236,9 @@ module load samtools
 #construcción de segemehl pareado con -S
 
 echo Align Paired
-segemehl.x -i ${IdxSegemehl} -S -d $GenomaRef -q ${name}_1_cured_seqtk.fastq.gz -p ${name}_2_cured_seqtk.fastq.gz -t $n_threads |  \
+segemehl.x -i ${IdxSegemehl} -S -s -d $GenomaRef -q ${name}_1_cured_seqtk.fastq.gz -p ${name}_2_cured_seqtk.fastq.gz -t $n_threads |  \
 	samtools sort -o ${name}_sorted.bam
 	samtools index ${name}_sorted.bam
-> ${name}.bam
 
 echo end
 

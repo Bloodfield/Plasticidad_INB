@@ -17,7 +17,7 @@
 #include <string.h>
 
 #define Log_name "Log.txt"
-#define Array_Size 100000
+#define Array_Size 1000
 #define Str_len 300
 
 unsigned de_queue(unsigned *array,unsigned end);
@@ -25,8 +25,21 @@ unsigned queue(unsigned *array,unsigned element, unsigned end, FILE *Log);
 int percentage_overlap(unsigned reference , unsigned query ,unsigned *flanco_A,unsigned *flanco_B);
 int err_message(FILE *Log);
 int Del_Overlap(FILE *In_file,FILE *Log,unsigned overlap_th, unsigned score_th,char *Chr);
-int add_line(FILE *In_file, unsigned *flanco_A, unsigned *flanco_B, unsigned *fin, FILE *Log);
-
+int add_line(FILE *In_file, unsigned *flanco_A, unsigned *flanco_B, unsigned *score,unsigned matrix[][Array_Size], unsigned *fin,unsigned overlap_th, FILE *Log);
+int in_class(unsigned *cluster,unsigned cluster_length, unsigned Classes[][Array_Size], unsigned Classes_size);
+unsigned max(unsigned a , unsigned b);
+int print_cluster(unsigned *flanco_A, unsigned *flanco_B, unsigned *factor, unsigned fin, unsigned *cluster, unsigned cluster_length);
+int conected_component(unsigned *cluster,unsigned *cluster_length,unsigned node,unsigned matrix[][Array_Size],unsigned fin);
+int copy_array(unsigned *array_a,unsigned *array_b,unsigned size);
+int array_and_self(unsigned *array_a,unsigned *array_b,unsigned size);
+int contract_to(unsigned *neighbor,unsigned fin,unsigned *cluster,unsigned *cluster_length);
+unsigned add_element(unsigned *flanco_A, unsigned *flanco_B, unsigned matrix[][Array_Size], unsigned *fin,unsigned overlap_th,unsigned FA, unsigned FB, FILE *Log);
+unsigned complete_data(FILE *In_file, unsigned *flanco_A, unsigned *flanco_B, unsigned *factor, unsigned matrix[][Array_Size], unsigned *fin,unsigned overlap_th, FILE *Log);
+unsigned remove_line_matrix(unsigned matrix[][Array_Size], unsigned n, unsigned lim_line, unsigned lim_row);
+unsigned remove_row_matrix(unsigned matrix[][Array_Size], unsigned n, unsigned lim_line, unsigned lim_row);
+unsigned recorrer_array(unsigned *array , unsigned size, unsigned n);
+unsigned empty_array(unsigned *array, unsigned size);
+	
 int main(int argc, char *argv[]){
 	
 	FILE *Log;
@@ -66,14 +79,40 @@ int main(int argc, char *argv[]){
 	}
 	unsigned Overflow = Del_Overlap(In_file,Log,overlap_th,score_th,Chr);
 	
-	if (Overflow==1){return 1;}
-	
 	// Cierre de archivos
 	fclose(In_file);
 	fclose(Log);
 	
+	if (Overflow==1){return 1;}
+	
+	
 	return 0;
 }
+
+/*
+ * 	PROGRAMAS DE SISTEMA
+ * 	
+ * 	DeQueue
+ * 	Queue
+ * 	percentage_overlap
+ * 	err_message
+ * 	Del_Overlap
+ * 	empty_array
+ * 	remove_line_matrix
+ * 	remove_row_matrix
+ * 	recorrer_array
+ * 	complete_data
+ * 	add_line
+ * 	add_element
+ * 	in_class
+ * 	max
+ * 	print_cluster
+ * 	conected_component
+ * 	copy_array
+ * 	array_and_self
+ * 	contract_to
+ */
+
 
 //	DeQueue el primer elemento y reordena la lista
 unsigned de_queue(unsigned *array,unsigned end){
@@ -103,23 +142,27 @@ int percentage_overlap(unsigned reference , unsigned query ,unsigned *flanco_A,u
 	unsigned FBR = flanco_B[reference];
 	unsigned FAQ = flanco_A[query];
 	unsigned FBQ = flanco_B[query];
+// 	printf("ref \t %u\t%u\nque\t%u\t%u\n",FAR,FBR,FAQ,FBQ);
 	if (FBQ < FAR || FAQ > FBR){return 0;}
 	unsigned divisor = FBR - FAR;
 	unsigned temp= 0;
 	if (FAQ < FAR){
 		if(FBQ < FBR){
 			temp = (FBQ-FAR )*100;
+// 			printf("\ttemp1=%u\n",temp);
 		}else{
 			return 100;
 		}
 	}else{
 		if(FBQ < FBR){
 			temp = (FBQ-FAQ )*100;
+// 			printf("\ttemp3=%u\n",temp);
 		}else{
 			temp = (FBR-FAQ )*100;
+// 			printf("\ttemp4=%u\n",temp);
 		}
 	}
-	
+// 	printf("temp=%u \tdivisor = %u\n",temp,divisor);
 	temp /= divisor;
 	return temp;
 }
@@ -144,28 +187,24 @@ int Del_Overlap(FILE *In_file,FILE *Log,unsigned overlap_th, unsigned score_th,c
 	
 	unsigned flanco_A[Array_Size]={0};
 	unsigned flanco_B[Array_Size]={0};
-	unsigned score[Array_Size]={0};
+	unsigned matrix[Array_Size][Array_Size]={0};
+	unsigned Classes[Array_Size][Array_Size]={0};
+	unsigned factor[Array_Size]={0};
 	
 	unsigned fin=0;
+	unsigned Classes_size=0;
 	
-	//	Primer valor 
-	if( add_line(In_file, flanco_A, flanco_B, &fin,Log)>=1){
-		fprintf(Log,"Something wrong with bed File: line 1\n");
-		fclose(In_file);
-		err_message(Log);
-		fclose(Log);
-		return 1;
-	}
-	
-	//	Segundo valor
-	if( add_line(In_file, flanco_A, flanco_B, &fin,Log)>=1){
-		fprintf(Log,"Something wrong with bed File: line 1\n");
-		fclose(In_file);
-		err_message(Log);
-		fclose(Log);
-		return 1;
-	}
-	
+	//	Primeros 2 valores
+	while(fin < 2){
+		if( add_line(In_file, flanco_A, flanco_B,factor,matrix, &fin, overlap_th,Log)>=1){
+			fprintf(Log,"Something wrong with bed File: line 1\n");
+			fclose(In_file);
+			err_message(Log);
+			fclose(Log);
+			return 1;
+		}
+	}	
+	//	Revisa el orden
 	if(flanco_A[fin-1] < flanco_A[fin-2]){
 		fprintf(Log,"Bed file not sorted\n");
 		err_message(Log);
@@ -173,97 +212,321 @@ int Del_Overlap(FILE *In_file,FILE *Log,unsigned overlap_th, unsigned score_th,c
 		return 1;
 	}
 	
-	// 	printf("FA = %u FB = %u \n",FA,FB);
-	
-	int is_EOF = 0;
 	unsigned Overflow = 0;
 	
 	while(fin > 1){
-		int X = 1;
-		unsigned FB0= flanco_B[0];
-		unsigned FAX= flanco_A[X];
+		
+		//	Completa las lecturas con los datos del archivo si el archivo no ha fallado o terminado
+		if(Overflow ==0){
+			Overflow=complete_data(In_file, flanco_A, flanco_B,factor,matrix, &fin, overlap_th,Log);
+		}
+		//	Si algo falló, regresa el fallo
+		if(Overflow==2){
+			return 1;
+		}
+		unsigned i = 0, j=0;
+		
+// 		for(i=0;i<fin;i++){
+// 			printf("fa=%u\tfb=%u\t factor = %u\n",flanco_A[i],flanco_B[i],factor[i]);
+// 		}
+// 		for(i=0;i<fin;i++){
+// 			for(j=0;j<fin;j++){
+// 				printf("%u\t",matrix[i][j]);
+// 			}
+// 			printf("\n");
+// 		}
+		
+		//	Obten el conjunto de componentes conexas
+		unsigned cluster[Array_Size]={0};
+		unsigned cluster_length=0;
+		conected_component(cluster,&cluster_length,0,matrix,fin);
+		
+// 		printf("Cluster:\n");
+// 		for(i=0;i<cluster_length;i++){
+// 			printf("%u\t",cluster[i]);
+// 		}
+// 		printf("\n");
 		
 		
-		score[0]++;
-		while(FB0>FAX){
-			int perA0 = percentage_overlap(X,0,flanco_A,flanco_B);
-			int per0A = percentage_overlap(0,X,flanco_A,flanco_B);
-			
-			if(per0A > overlap_th && perA0 > overlap_th){
-				score[0]++;
-				score[X]++;
+		if( ! in_class(cluster, cluster_length, Classes, Classes_size)){
+			//	Si no esta la clase entonces imprime
+			print_cluster(flanco_A, flanco_B, factor, fin, cluster, cluster_length);
+			//	Añade la clase
+			for(i =0;i<cluster_length; i++){
+				Classes[Classes_size][cluster[i]]=1;
 			}
-			X++;
-			if(X>=fin){
-				if(is_EOF){
-					FAX = FB0;
-				}else if((Overflow = add_line(In_file, flanco_A, flanco_B, &fin,Log))==1){
-					is_EOF = 1;
-					FAX = FB0;
-				}else{
-					if(flanco_A[fin-1] < flanco_A[fin-2]){
-						fprintf(Log,"Bed file not sorted\n");
-						err_message(Log);
-						fclose(Log);
-						return 1;
-					}
-					FAX = flanco_A[fin-1];
-				}
-			}
+			Classes_size++;
 		}
 		
-		FB0= flanco_B[0];
-		FAX= flanco_A[1];
+		//	Remover registro 0
+		de_queue(flanco_A,fin);
+		de_queue(flanco_B,fin);
+		de_queue(factor,fin);
 		
-		unsigned FA0= flanco_A[0];
-		unsigned FBX= flanco_B[1];
 		
-		unsigned FA = de_queue(flanco_A,fin);
-		unsigned FB = de_queue(flanco_B,fin);
-		unsigned temp_score = de_queue(score,fin);
-		fin --;
+		remove_line_matrix(matrix,0,fin,fin);
+		remove_row_matrix(matrix,0,fin,fin);
 		
+// 		for(i=0;i<fin-1;i++){
+// 			for(j=0;j<fin-1;j++){
+// 				printf("%u\t",matrix[i][j]);
+// 			}
+// 			printf("\n");
+// 		}
+// 		
+// 		for(i=0;i<Classes_size;i++){
+// 			for(j=0;j<fin;j++){
+// 				printf("%u\t",Classes[i][j]);
+// 			}
+// 			printf("\n");
+// 		}
+// 		printf("\n-----\n");
+		remove_row_matrix(Classes,0,Classes_size,fin);
+// 		for(i=0;i<Classes_size;i++){
+// 			for(j=0;j<fin-1;j++){
+// 				printf("%u\t",Classes[i][j]);
+// 			}
+// 			printf("\n");
+// 		}
+// 		printf("\n-----\n");
+
+		fin--;
+		//	Remover clase si es necesario
+		while(empty_array(Classes[0],fin) && Classes_size>0){
+			remove_line_matrix(Classes,0,Classes_size,fin);
+			Classes_size--;
+// 			printf("remove class \n");
+		}
+		
+// 		for(i=0;i<Classes_size;i++){
+// 			for(j=0;j<fin;j++){
+// 				printf("%u\t",Classes[i][j]);
+// 			}
+// 			printf("\n");
+// 		}
+// 		printf("\n-----\n");
+		
+		//	Completa las lecturas con los datos del archivo si el archivo no ha fallado o terminado
+		while (fin < 2 && Overflow==0){
+			Overflow=add_line(In_file, flanco_A, flanco_B,factor,matrix, &fin, overlap_th,Log);
+		}
 		if (Overflow == 2){return 1;}
 		
-		if (temp_score >= score_th && FAX != FA0 && FBX != FB0){
-			printf("%s\t%u\t%u\t%u\n",Chr,FA,FB,temp_score);
-		}
-		
-		if (fin <= 1){
-			Overflow = add_line(In_file, flanco_A, flanco_B, &fin,Log);
-		}
-		if (Overflow == 2){return 1;}
 	}
 	
-	unsigned FA = de_queue(flanco_A,fin);
-	unsigned FB = de_queue(flanco_B,fin);
-	unsigned temp_score = de_queue(score,fin);
-	fin --;
-	
-	if (temp_score > score_th){
-		printf("%s\t%u\t%u\t%u\n",Chr,FA,FB,temp_score);
+	//	Revisa si se tiene que imprimir el último elemento
+	unsigned cluster[1]={0};
+	unsigned cluster_length=1;
+	if( ! in_class(cluster, cluster_length, Classes, Classes_size)){
+		//	Si no esta la clase entonces imprime
+		print_cluster(flanco_A, flanco_B, factor, fin, cluster, cluster_length);
 	}
 	
 	return 0;
 	
 }
 
-int add_line(FILE *In_file, unsigned *flanco_A, unsigned *flanco_B, unsigned *fin, FILE *Log){
+unsigned empty_array(unsigned *array, unsigned size){
+	unsigned i=0;
+	if(size >= Array_Size){return 2;}
+	for (i=0;i<size;i++){
+		if(array[i]!=0){return 0;}
+	}
+	return 1;
+}
+
+unsigned remove_line_matrix(unsigned matrix[][Array_Size], unsigned n, unsigned lim_line, unsigned lim_row){
+	
+	if (n >= Array_Size || n >= lim_line){return 1;}
+	unsigned lim = lim_line-1;
+	unsigned i=0;
+	
+	for (i=n; i< lim; i++){
+		copy_array(matrix[i+1],matrix[i],lim_row);
+	}
+	for (i=0;i< lim_row;i++){
+		matrix[lim][i]=0;
+	}
+	return 0;
+}
+
+unsigned remove_row_matrix(unsigned matrix[][Array_Size], unsigned n, unsigned lim_line, unsigned lim_row){
+	
+	if (n >= Array_Size || n >= lim_line){return 1;}
+	unsigned lim = lim_row-1;
+	unsigned i=0;
+	
+	for (i=n; i< lim; i++){
+		recorrer_array(matrix[i],lim_row,n);
+	}
+	return 0;
+}
+
+unsigned recorrer_array(unsigned *array, unsigned size, unsigned n){
+	
+	if(n >= size || n>= Array_Size ){return 1;}
+	unsigned i=0;
+	unsigned lim = size-1;
+	for(i=n;i< lim;i++){
+		array[i]=array[i+1];
+	}
+	array[lim]=0;
+	return 0;
+}
+
+unsigned complete_data(FILE *In_file, unsigned *flanco_A, unsigned *flanco_B, unsigned *factor, unsigned matrix[][Array_Size], unsigned *fin,unsigned overlap_th, FILE *Log){
+		unsigned FB0= flanco_B[0];
+		unsigned FAX= flanco_A[(*fin)-1];
+ 		unsigned Overflow=0;
+		while(FB0>FAX && Overflow == 0){
+			//	Obten la información de la linea
+			Overflow=add_line(In_file, flanco_A, flanco_B,factor,matrix, fin, overlap_th,Log);
+			
+			//	Revisa el orden
+			if(flanco_A[(*fin)-1] < flanco_A[(*fin)-2]){
+				fprintf(Log,"Bed file not sorted\n");
+				err_message(Log);
+				fclose(Log);
+				return 2;
+			}
+			FAX= flanco_A[(*fin)-1];
+		}
+	return Overflow;
+}
+
+int add_line(FILE *In_file, unsigned *flanco_A, unsigned *flanco_B, unsigned *factor, unsigned matrix[][Array_Size], unsigned *fin,unsigned overlap_th, FILE *Log){
 	
 	char Dummy1[Str_len]={0};
 	char Dummy2[Str_len]={0};
 	unsigned FA,FB;
 	unsigned Overflow= 0;
-	
 	//	Primer valor
 	if(fscanf(In_file,"%s\t%u\t%u\t%[^\n]s\n",Dummy1,&FA,&FB,Dummy2)!= 4){
 		
 		return 1;
 	}
-	Overflow =  queue(flanco_A,FA,*fin,Log);
-	Overflow += queue(flanco_B,FB,*fin,Log);
-	(*fin)++;
+	if(*fin == 0){
+		Overflow = add_element(flanco_A, flanco_B, matrix, fin,overlap_th,FA, FB, Log);
+		factor[(*fin)-1]++;
+	}else{
+		unsigned fin_1=(*fin)-1;
+		if(flanco_A[fin_1]!=FA || flanco_B[fin_1]!=FB){
+			Overflow = add_element(flanco_A, flanco_B, matrix, fin,overlap_th,FA, FB, Log);
+			fin_1=(*fin)-1;
+		}
+		factor[fin_1]++;
+	}
+	
 	if (Overflow > 0){return  2;}
 	
+	return 0;
+}
+
+unsigned add_element(unsigned *flanco_A, unsigned *flanco_B, unsigned matrix[][Array_Size], unsigned *fin,unsigned overlap_th,unsigned FA, unsigned FB, FILE *Log){
+	unsigned Overflow=0;
+	Overflow =  queue(flanco_A,FA,*fin,Log);
+	Overflow += queue(flanco_B,FB,*fin,Log);
+	unsigned i = 0;
+	for (i=0;i< *fin ; i++){
+		int per_ida = percentage_overlap(i,*fin,flanco_A,flanco_B);
+		int per_regreso = percentage_overlap(*fin,i,flanco_A,flanco_B);
+// 		printf("ida = %d \t regreso = %d\n",per_ida,per_regreso);
+		if(per_ida > overlap_th && per_regreso > overlap_th){
+			matrix[i][*fin]=matrix[*fin][i]=1;
+		}
+	}
+	(*fin)++;
+	return Overflow;
+}
+
+int in_class(unsigned *cluster,unsigned cluster_length, unsigned Classes[][Array_Size], unsigned Classes_size){
+	unsigned i =0, j= 0;
+	if(Classes_size >= Array_Size){return -1;}
+	for(i=0;i< Classes_size;i++){
+		unsigned temp=1;
+		for(j=0;j<cluster_length;j++){
+			unsigned index = cluster[j];
+			if(index >= Array_Size ){return -1;}
+// 			printf("%u AND %u\n",temp,Classes[i][index]);
+			temp = temp && Classes[i][index];
+		}
+		if(temp){
+			return 1;
+		}
+	}
+	return 0;
+	
+}
+
+unsigned max(unsigned a , unsigned b){
+	if (a>= b){
+		return a;
+	}
+	return b;
+}
+
+int print_cluster(unsigned *flanco_A, unsigned *flanco_B, unsigned *factor, unsigned fin, unsigned *cluster, unsigned cluster_length){
+	unsigned max_coord=flanco_A[0];
+	unsigned i = 0, score = 0;
+// 	printf("cluster _len= %u\n",cluster_length);
+	for (i=0;i<cluster_length;i++){
+		unsigned index = cluster[i];
+		if (index >= fin){return -1;}
+// 		printf("score= %u\n",factor[index]);
+		score += factor[index];
+		max_coord = max(max_coord,flanco_B[index]);
+	}
+	printf("chr0\t%u\t%u\t%u\n",flanco_A[0],max_coord,score);
+	
+	return 0;
+}
+
+int conected_component(unsigned *cluster,unsigned *cluster_length,unsigned node,unsigned matrix[][Array_Size],unsigned fin){
+	unsigned neighbor[Array_Size]={0};
+	unsigned ref[Array_Size]={0};
+	copy_array(matrix[0],neighbor,fin);
+	copy_array(matrix[0],ref,fin);
+	neighbor[node]=1;
+	unsigned i = 0;
+	for (i=0; i<= fin ; i++){
+		if(ref[i]==1 && i != node){
+			unsigned temp[Array_Size]={0};
+			copy_array(matrix[i],temp,fin);
+			temp[i]=1;
+			array_and_self(neighbor, temp,fin);
+		}
+	}
+	
+	contract_to(neighbor,fin,cluster,cluster_length);
+	
+	return 0;
+}
+
+int copy_array(unsigned *array_a,unsigned *array_b,unsigned size){
+	unsigned i=0;
+	for(i=0;i<size; i++){
+		array_b[i]=array_a[i];
+	}
+	return 0;
+}
+
+int array_and_self(unsigned *array_a,unsigned *array_b,unsigned size){
+	unsigned i=0;
+	for(i=0;i<size; i++){
+		array_a[i]= array_b[i] && array_a[i];
+	}
+	return 0;
+}
+
+int contract_to(unsigned *neighbor,unsigned fin,unsigned *cluster,unsigned *cluster_length){
+	unsigned i=0;
+	if(fin >= Array_Size){return -1;}
+	(*cluster_length)=0;
+	for(i=0;i<fin; i++){
+		if(neighbor[i]){
+			cluster[*cluster_length]=i;
+			(*cluster_length)++;
+		}
+	}
 	return 0;
 }
