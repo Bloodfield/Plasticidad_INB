@@ -23,32 +23,42 @@ int main(int argc, char *argv[]){
 	char *deleciones;
 	char *flanco_izquierdo;
 	char *flanco_derecho;
+	char *Overlap;
 	float th=0.0;
 		
-	if (argc != 5){
+	if (argc != 6){
 		print_help(Log);
 		fclose(Log);
 		return 1;
 	}
 	
-	fprintf(Log,"Name : %s \n",argv[1]);
-	fprintf(Log,"Izquierdo : %s \n",argv[2]);
-	fprintf(Log,"Derecho : %s \n",argv[3]);
-	deleciones=argv[1];
-	flanco_izquierdo=argv[2];
-	flanco_derecho=argv[3];
-	sscanf(argv[4],"%f",&th);
+	fprintf(Log,"Name_Overlap : %s \n",argv[1]);
+	fprintf(Log,"Name_del : %s \n",argv[2]);
+	fprintf(Log,"Izquierdo : %s \n",argv[3]);
+	fprintf(Log,"Derecho : %s \n",argv[4]);
+	Overlap=argv[1];
+	deleciones=argv[2];
+	flanco_izquierdo=argv[3];
+	flanco_derecho=argv[4];
+	sscanf(argv[5],"%f",&th);
 	
 	//	Abrir y probar archivos
 	
+	FILE *Overlap_fh;
 	FILE *deleciones_fh;
 	FILE *flanco_izquierdo_fh;
 	FILE *flanco_derecho_fh;
+	Overlap_fh= fopen(Overlap,"r");
 	deleciones_fh = fopen(deleciones,"r");
 	flanco_izquierdo_fh = fopen(flanco_izquierdo,"r");
 	flanco_derecho_fh = fopen(flanco_derecho,"r");
 	
 	int ret =0;
+	if(!Overlap_fh ){
+		fprintf(Log,"Archivo : %s no existe\n",deleciones);
+		ret= 1;
+	}
+	
 	if(!deleciones_fh ){
 		fprintf(Log,"Archivo : %s no existe\n",deleciones);
 		ret= 1;
@@ -65,11 +75,13 @@ int main(int argc, char *argv[]){
 		fclose(Log);
 		return 1;
 	}
+	
 	//	Algoritmo BEGIN
 	while(!feof(deleciones_fh)){
-		unsigned int inicio=0, fin=0;
-		unsigned int cover_score_left=0, cover_score_right=0, cover_score_del=0;
-		unsigned int lenght=0;
+		unsigned inicio=0, fin=0;
+		unsigned cover_score_left=0, cover_score_right=0, cover_score_del=0;
+		unsigned lenght=0;
+		unsigned overlap_score_del = 0;
 		float landscape_coverage=0.0, del_coverage=0.0;
 		float ratio=0.0;
 		char Chr[500]={0};
@@ -85,8 +97,13 @@ int main(int argc, char *argv[]){
 			fclose(Log);
 			return 1;
 		}
-		if(fscanf(deleciones_fh,"%s\t%u\t%u\t%u\n",Chr,&inicio,&fin,&cover_score_del)!= 4){
+		if(fscanf(deleciones_fh,"%u\n",&cover_score_del)!= 4){
 			fprintf(Log,"Archivo : %s is not a BED format\n",deleciones);
+			fclose(Log);
+			return 1;
+		}
+		if(fscanf(Overlap_fh,"%s\t%u\t%u\t%u\n",Chr,&inicio,&fin,&overlap_score_del)!= 4){
+			fprintf(Log,"Archivo : %s is not a BED format\n",Overlap);
 			fclose(Log);
 			return 1;
 		}
@@ -101,11 +118,12 @@ int main(int argc, char *argv[]){
 // 		printf("ratio = %0.6f\n",ratio);
 		
 		if((ratio < 1-th && ratio >0.5+th) || (ratio <0.5-th && ratio >th)){
-			printf("%s\t%u\t%u\t%.5f\n",Chr,inicio,fin,ratio);
+			printf("%s\t%u\t%u\t%.5f\t%u\n",Chr,inicio,fin,ratio,overlap_score_del);
 		}
 	}
 	
 	//	Algoritmo END
+	fclose(Overlap_fh);
 	fclose(deleciones_fh);
 	fclose(flanco_izquierdo_fh);
 	fclose(flanco_derecho_fh);
