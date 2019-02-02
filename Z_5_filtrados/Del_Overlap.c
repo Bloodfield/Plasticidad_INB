@@ -282,8 +282,13 @@ int Del_Overlap(FILE *In_file,FILE *Log,unsigned overlap_th, unsigned score_th,c
 // 		remove_line_matrix(matrix,0,fin,fin);
 // 		remove_row_matrix(matrix,0,fin,fin);
 		
-		remove_node_adj_list( adj_list,  adj_list_sizes, 0, fin);
-		
+		Overflow=remove_node_adj_list( adj_list,  adj_list_sizes, 0, fin);
+		if (Overflow == 2){
+			
+			fprintf(Log,"node remove issue\n");
+			return 1;
+			
+		}
 // 		for(i=0;i<fin-1;i++){
 // 			for(j=0;j<fin-1;j++){
 // 				printf("%u\t",matrix[i][j]);
