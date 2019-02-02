@@ -211,6 +211,7 @@ int Del_Overlap(FILE *In_file,FILE *Log,unsigned overlap_th, unsigned score_th,c
 			fclose(Log);
 			return 1;
 		}
+		fprintf(Log,"Echo 1 \n");
 	}	
 	//	Revisa el orden
 	if(flanco_A[fin-1] < flanco_A[fin-2]){
@@ -223,7 +224,7 @@ int Del_Overlap(FILE *In_file,FILE *Log,unsigned overlap_th, unsigned score_th,c
 	unsigned Overflow = 0;
 	
 	while(fin > 1){
-		
+		fprintf(Log,"Echo 2 \n");
 		//	Completa las lecturas con los datos del archivo si el archivo no ha fallado o terminado
 		if(Overflow ==0){
 			Overflow=complete_data(In_file, flanco_A, flanco_B,factor,adj_list, adj_list_sizes, &fin, overlap_th,Log);
@@ -441,6 +442,7 @@ unsigned complete_data(FILE *In_file, unsigned *flanco_A, unsigned *flanco_B, un
 		unsigned FAX= flanco_A[(*fin)-1];
  		unsigned Overflow=0;
 		while(FB0>FAX && Overflow == 0){
+			fprintf(Log,"Echo 2 \n");
 			//	Obten la información de la linea
 			Overflow=add_line(In_file, flanco_A, flanco_B,factor, adj_list,adj_list_sizes, fin, overlap_th,Log);
 			
