@@ -263,6 +263,10 @@ int Del_Overlap(FILE *In_file,FILE *Log,unsigned overlap_th, unsigned score_th,c
 			//	Si no esta la clase entonces imprime
 			print_cluster(flanco_A, flanco_B, factor, fin, cluster, cluster_length);
 			//	Añade la clase
+			if(Classes_size>=Classes_max_size){
+				fprintf(Log,"Class overload\n");
+				return 1; 
+			}
 			for(i =0;i<cluster_length; i++){
 				Classes[Classes_size][cluster[i]]=1;
 			}
@@ -484,6 +488,11 @@ unsigned add_element(unsigned *flanco_A, unsigned *flanco_B,  unsigned adj_list[
 		int per_regreso = percentage_overlap(*fin,i,flanco_A,flanco_B);
 // 		printf("ida = %d \t regreso = %d\n",per_ida,per_regreso);
 		if(per_ida > overlap_th && per_regreso > overlap_th){
+			if(adj_list_sizes[i] >= Adj_list_max_size||adj_list_sizes[*fin] >= Adj_list_max_size){
+				fprintf(Log,"AjList overflow\n");
+				return 1;
+				
+			}
 			add_edge_adj_list( adj_list,adj_list_sizes, i,*fin);
 // 			matrix[i][*fin]=matrix[*fin][i]=1;
 		}
