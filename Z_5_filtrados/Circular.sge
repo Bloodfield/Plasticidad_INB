@@ -657,7 +657,7 @@ echo 2bam
 sort -k1 -k1.4n -k2,3n -u ${name}_splitreads_2bam.bed > ${name}_splitreads_2bam_sort.bed
 echo 2bam_sorted
 
-samtools bedcov -j ${name}_splitreads_Overlap.bed ${name}_sorted.bam  | sort > ${name}_splitreads_bedcov.bed
+samtools bedcov -j ${name}_splitreads_Overlap.bed ${name}_sorted.bam  > ${name}_splitreads_bedcov.bed
 echo bedcov
 
 Allel_Filter ${name}_splitreads_Overlap.bed ${name}_splitreads_bedcov.bed 0.025 ${name}_NotAllel.bed
