@@ -14,40 +14,56 @@
  * 
  */
 #include <stdio.h>
-#include <string.h>
 
 #define Log_name "Log.txt"
 #define Array_Size 1200
-#define Classes_max_size 850
-#define Clases_adj_max 1000
+#define Classes_max_size 900
+#define Clases_adj_max 900
 #define Adj_list_max_size 850
 #define Str_len 300
 
+//	Arrays
 unsigned de_queue(unsigned *array,unsigned end);
 unsigned queue(unsigned *array,unsigned element, unsigned end, FILE *Log);
-int percentage_overlap(unsigned reference , unsigned query ,unsigned *flanco_A,unsigned *flanco_B);
-int err_message(FILE *Log);
-int Del_Overlap(FILE *In_file,FILE *Log,unsigned overlap_th, unsigned score_th,char *Chr);
-int read_line(FILE *In_file, unsigned *flanco_A, unsigned *flanco_B,unsigned *line_ID, unsigned *score, unsigned adj_list[][Adj_list_max_size],unsigned *adj_list_sizes, unsigned *fin,unsigned overlap_th, FILE *Log);
-unsigned in_class(unsigned *cluster,unsigned cluster_length, unsigned *line_ID, unsigned Classes[][Clases_adj_max],unsigned *Classes_sizes, unsigned Classes_size);
-unsigned max(unsigned a , unsigned b);
-int print_cluster(unsigned *flanco_A, unsigned *flanco_B, unsigned *factor, unsigned fin, unsigned *cluster, unsigned cluster_length, char *Chr);
-int conected_component(unsigned *cluster,unsigned *cluster_length,unsigned node, unsigned adj_list[][Adj_list_max_size],unsigned *adj_list_sizes);
 int copy_array(unsigned *array_a,unsigned *array_b,unsigned size);
 int array_and_self(unsigned *array_a,unsigned *array_b,unsigned size);
 int contract_to(unsigned *neighbor,unsigned fin,unsigned *cluster,unsigned *cluster_length);
-unsigned add_element(unsigned *flanco_A, unsigned *flanco_B,unsigned *line_ID, unsigned line_number, unsigned adj_list[][Adj_list_max_size],unsigned *adj_list_sizes, unsigned *fin,unsigned overlap_th,unsigned FA, unsigned FB, FILE *Log);
-unsigned complete_data(FILE *In_file, unsigned *flanco_A, unsigned *flanco_B,unsigned *line_ID, unsigned *factor,  unsigned adj_list[][Adj_list_max_size],unsigned *adj_list_sizes, unsigned *fin,unsigned overlap_th, FILE *Log);
-unsigned remove_line_matrix(unsigned matrix[][Array_Size], unsigned n, unsigned lim_line, unsigned lim_row);
-unsigned remove_row_matrix(unsigned matrix[][Array_Size], unsigned n, unsigned lim_line, unsigned lim_row);
 unsigned recorrer_array(unsigned *array , unsigned size, unsigned n);
 unsigned empty_array(unsigned *array, unsigned size);
-unsigned remove_node_adj_list(unsigned adj_list[][Adj_list_max_size], unsigned *adj_list_sizes,unsigned node, unsigned fin);
 unsigned add_to_order_array(unsigned *array, unsigned *len , unsigned elem);
 unsigned array_intersect_self(unsigned *self_array,unsigned *array_len, unsigned *second,unsigned second_len);
-unsigned add_edge_adj_list(unsigned adj_list[][Adj_list_max_size],unsigned *adj_list_sizes, unsigned nodo_a, unsigned nodo_b);
-unsigned is_subeq(unsigned *Arr1,unsigned size1, unsigned *Arr2, unsigned size2);
 unsigned clear_unsigned_array(unsigned *Array, unsigned fin);
+
+//	Calculos de programa
+int percentage_overlap(unsigned reference , unsigned query ,unsigned *flanco_A,unsigned *flanco_B);
+
+//	Sistema
+int err_message(FILE *Log);
+
+//	Funciones de proceso
+int Del_Overlap(FILE *In_file,FILE *Log,unsigned overlap_th, unsigned score_th,char *Chr);
+int read_line(FILE *In_file, unsigned *flanco_A, unsigned *flanco_B,unsigned *line_ID, unsigned *score, unsigned adj_list[][Adj_list_max_size],unsigned *adj_list_sizes, unsigned *fin,unsigned overlap_th,unsigned *Next_X_Index, unsigned *next_line, FILE *Log);
+int conected_component(unsigned *cluster,unsigned *cluster_length,unsigned node, unsigned adj_list[][Adj_list_max_size],unsigned *adj_list_sizes);
+int print_cluster(unsigned *flanco_A, unsigned *flanco_B, unsigned *factor, unsigned fin, unsigned *cluster, unsigned cluster_length, char *Chr,unsigned score_th);
+unsigned add_element(unsigned *flanco_A, unsigned *flanco_B,unsigned *line_ID, unsigned line_number, unsigned adj_list[][Adj_list_max_size],unsigned *adj_list_sizes, unsigned *fin,unsigned overlap_th,unsigned FA, unsigned FB, FILE *Log);
+unsigned complete_data(FILE *In_file, unsigned *flanco_A, unsigned *flanco_B,unsigned *line_ID, unsigned *factor,  unsigned adj_list[][Adj_list_max_size],unsigned *adj_list_sizes, unsigned *fin,unsigned overlap_th, unsigned *next_line, FILE *Log);
+unsigned purge_classes(unsigned Classes[][Clases_adj_max], unsigned *Classes_sizes, unsigned *Classes_size, unsigned ID);
+
+//	Set operations
+unsigned in_class(unsigned *cluster,unsigned cluster_length, unsigned *line_ID, unsigned Classes[][Clases_adj_max],unsigned *Classes_sizes, unsigned Classes_size);
+unsigned is_subeq(unsigned *Arr1,unsigned size1, unsigned *Arr2, unsigned size2);
+
+//	Funciones basicas
+unsigned max(unsigned a , unsigned b);
+
+//	Matrices
+unsigned remove_line_matrix(unsigned matrix[][Array_Size], unsigned n, unsigned lim_line, unsigned lim_row);
+unsigned remove_row_matrix(unsigned matrix[][Array_Size], unsigned n, unsigned lim_line, unsigned lim_row);
+
+//	Listas de adyacencia
+unsigned remove_node_adj_list(unsigned adj_list[][Adj_list_max_size], unsigned *adj_list_sizes,unsigned node, unsigned fin);
+unsigned add_edge_adj_list(unsigned adj_list[][Adj_list_max_size],unsigned *adj_list_sizes, unsigned nodo_a, unsigned nodo_b);
+
 	
 int main(int argc, char *argv[]){
 	
@@ -83,7 +99,7 @@ int main(int argc, char *argv[]){
 	FILE *In_file;
 	In_file= fopen(In_file_name,"r");
 	if(!In_file){
-		printf("Archivo : %s no existe\n",In_file_name);
+		fprintf(Log,"Archivo : %s no existe\n",In_file_name);
 		return 1;
 	}
 	unsigned Overflow = Del_Overlap(In_file,Log,overlap_th,score_th,Chr);
@@ -198,7 +214,7 @@ int Del_Overlap(FILE *In_file,FILE *Log,unsigned overlap_th, unsigned score_th,c
 	unsigned Classes_sizes[Clases_adj_max];
 	
 	unsigned Classes_size=0;
-	unsigned next_line=0;
+	unsigned current_line = 0, next_line=0;
 	unsigned Overflow = 0;
 	
 	while(Overflow < 1){
@@ -214,37 +230,34 @@ int Del_Overlap(FILE *In_file,FILE *Log,unsigned overlap_th, unsigned score_th,c
 		
 		unsigned fin=0;
 		
-		
 		//	Coloca la linea de lectura correspondiente
 		fseek(In_file,next_line,SEEK_SET);
-		
+		current_line= next_line;
 		//	Completa las lecturas con los datos del archivo si el archivo no ha fallado o terminado
 		if(Overflow ==0){
-			Overflow=complete_data(In_file, flanco_A, flanco_B,line_ID,factor,adj_list, adj_list_sizes, &fin, overlap_th,Log);
+			Overflow=complete_data(In_file, flanco_A, flanco_B,line_ID,factor,adj_list, adj_list_sizes, &fin, overlap_th,&next_line,Log);
 // 			printf("Echo 2.1 \n");
 		}
 		//	Si algo falló, regresa el fallo
 		if(Overflow==2){
+			fprintf(Log,"Complete data return non zero sataus\n");
 			return 1;
 		}
-		
-		unsigned i = 0, j=0;
-		
-// 		for(i=0; i< fin;i++){
-// 			printf("FA=%u\tFB=%u\tID=%u\tfactor=%u\n",flanco_A[i],flanco_B[i],line_ID[i],factor[i]);
-// 		}
 		
 		//	Obten el conjunto de componentes conexas
 		unsigned cluster[Array_Size]={0};
 		unsigned cluster_length=0;
 		conected_component(cluster,&cluster_length,0,adj_list, adj_list_sizes);
 		
+		//	Comprueba que sea nueva
 		unsigned test_in_class = in_class(cluster, cluster_length, line_ID,  Classes,Classes_sizes, Classes_size);
-		
-		if(test_in_class == 2){return 1;}
+		if(test_in_class == 2){
+			fprintf(Log,"Error in test class\n");
+			return 1;
+		}
 		if(test_in_class==0){
 			//	Si no esta la clase entonces imprime
-			print_cluster(flanco_A, flanco_B, factor, fin, cluster, cluster_length,Chr);
+			print_cluster(flanco_A, flanco_B, factor, fin, cluster, cluster_length,Chr,score_th);
 			if(Classes_size>=Classes_max_size){
 				fprintf(Log,"Class overload\n");
 // 				printf("Class overload\n");
@@ -252,74 +265,80 @@ int Del_Overlap(FILE *In_file,FILE *Log,unsigned overlap_th, unsigned score_th,c
 			}
 			//	Añade la clase
 			Classes_size++;
-			}
+		}
 		
 		//	Purgar Clases
-		
-		//		Quitar linea actual de Clases
-// 		printf("Purge next_line = %u\n",next_line);
-		for(i=0;i<Classes_size;i++){
-			for (j=0;j<Classes_sizes[i] && Classes[i][j] < next_line; j++){}
-// 			printf("Purge j1 = %u \n",j);
-			if(Classes[i][j] == next_line && Classes_sizes[i]>0 ){
-				unsigned lim=Classes_sizes[i]-1;
-				for (j;j<lim;j++){
-					Classes[i][j] = Classes[i][j+1];
-				}
-				Classes[i][j] = 0;
-				Classes_sizes[i]--;
-			}
-		}
-		//		Eliminar clases vacías
-		for(i=0;i<Classes_size && Classes_sizes[i]!=0;i++){}	//	Busca una linea vacía
-		if(Classes_sizes[i]==0 && i<Classes_size){
-			unsigned offset=1;
-			//	Realiza corrimiento de datos
-			while(Classes_sizes[i+offset]==0 && i+offset<Classes_size){
-				offset++;
-			}
-			for(i;i<Classes_size-offset;i++){
-				Classes_sizes[i]=Classes_sizes[i+offset];
-				for(j=0;j<Classes_sizes[i];j++){
-					Classes[i][j]=Classes[i+offset][j];
-				}
-				while(Classes_sizes[i+offset]==0 && i+offset< Classes_size-1){
-					offset++;
-				}
-				if(Classes_sizes[i+offset]==0 && i+offset==Classes_size-1){
-					offset++;
-				}
-			}
-			
-			//	Vuelve 0 las últimas
-			for(i;i<Classes_size;i++){
-				for (j;j<Classes_sizes[i];j++){
-					Classes[i][j]=0;
-				}
-				Classes_sizes[i]=0;
-			}
-			
-			//	Actualiza Classes_size
-			Classes_size -= offset;
+		unsigned test = purge_classes(Classes, Classes_sizes, &Classes_size, current_line);
+		if(test!=0){
+			fprintf(Log,"Purge class failed\n");
+			return 1;
 		}
 		
 		//	Point to next line in file
-		if(fin > 1){
-			next_line = line_ID[1];
-		}else if(Overflow==0){
-			next_line = ftell(In_file);
-		}
+// 		if(fin > 1){
+// 			next_line = line_ID[1];
+// 		}else if(Overflow==0){
+// 			next_line = ftell(In_file);
+// 		}
 // 		printf("next_line=%u\n",next_line);
-		
-		
-		
-		if (Overflow == 2){return 1;}
 		
 	}
 		
 	return 0;
 	
 }
+
+unsigned purge_classes(unsigned Classes[][Clases_adj_max], unsigned *Classes_sizes, unsigned *Classes_size, unsigned ID){
+	
+	unsigned size = *Classes_size;
+	unsigned i=0, j=0;
+	for(i=0;i<size;i++){
+		for (j=0;j<Classes_sizes[i] && Classes[i][j] < ID; j++){}
+		// 			printf("Purge j1 = %u \n",j);
+		if(Classes[i][j] == ID && Classes_sizes[i]>0 ){
+			unsigned lim=Classes_sizes[i]-1;
+			for (j;j<lim;j++){
+				Classes[i][j] = Classes[i][j+1];
+			}
+			Classes[i][j] = 0;
+			Classes_sizes[i]--;
+		}
+	}
+	//		Eliminar clases vacías
+	for(i=0;i<size && Classes_sizes[i]!=0;i++){}	//	Busca una linea vacía
+	if(Classes_sizes[i]==0 && i<size){
+		unsigned offset=1;
+		//	Realiza corrimiento de datos
+		while(Classes_sizes[i+offset]==0 && i+offset<size){
+			offset++;
+		}
+		for(i;i<size-offset;i++){
+			Classes_sizes[i]=Classes_sizes[i+offset];
+			for(j=0;j<Classes_sizes[i];j++){
+				Classes[i][j]=Classes[i+offset][j];
+			}
+			while(Classes_sizes[i+offset]==0 && i+offset< size-1){
+				offset++;
+			}
+			if(Classes_sizes[i+offset]==0 && i+offset==size-1){
+				offset++;
+			}
+		}
+		
+		//	Vuelve 0 las últimas
+		for(i;i<size;i++){
+			for (j;j<Classes_sizes[i];j++){
+				Classes[i][j]=0;
+			}
+			Classes_sizes[i]=0;
+		}
+		
+		//	Actualiza Classes_size
+		(*Classes_size) -= offset;
+	}
+	return 0;
+}
+
 
 unsigned clear_unsigned_array(unsigned *Array, unsigned fin){
 	int i = 0;
@@ -418,19 +437,27 @@ unsigned recorrer_array(unsigned *array, unsigned size, unsigned n){
 	return 0;
 }
 
-unsigned complete_data(FILE *In_file, unsigned *flanco_A, unsigned *flanco_B,unsigned *line_ID, unsigned *factor,  unsigned adj_list[][Adj_list_max_size],unsigned *adj_list_sizes, unsigned *fin,unsigned overlap_th, FILE *Log){
+unsigned complete_data(FILE *In_file, unsigned *flanco_A, unsigned *flanco_B,unsigned *line_ID, unsigned *factor,  unsigned adj_list[][Adj_list_max_size],unsigned *adj_list_sizes, unsigned *fin,unsigned overlap_th, unsigned *next_line, FILE *Log){
 	
-	unsigned Overflow=read_line(In_file, flanco_A, flanco_B,line_ID,factor, adj_list,adj_list_sizes, fin, overlap_th,Log);
+	unsigned FAX= 0;	//	primer índice de la siguiente linea leída
+	unsigned temp_line=0;
+	unsigned Overflow=read_line(In_file, flanco_A, flanco_B,line_ID,factor, adj_list,adj_list_sizes, fin, overlap_th, &FAX,&temp_line,Log);
 	
 	unsigned FB0= flanco_B[0];
 	unsigned FA0= flanco_A[0];
 	//	Condition 1
 	unsigned lim_buffer = FA0 +((FB0-FA0)*overlap_th/100)+1;	// +1 es por el redondeo
-	unsigned FAX= 0;
+// 	printf("Ref= %u, %u\n",FA0,FB0);
+// 	printf("lim_buffer = %u\n",lim_buffer);
+	unsigned flag=1;
 	while(lim_buffer>FAX && Overflow == 0){
-// 			printf("Echo 3 \n");
+// 		printf("Echo 3 \n");
 		//	Obten la información de la linea
-		Overflow=read_line(In_file, flanco_A, flanco_B,line_ID,factor, adj_list,adj_list_sizes, fin, overlap_th,Log);
+		Overflow=read_line(In_file, flanco_A, flanco_B,line_ID,factor, adj_list,adj_list_sizes, fin, overlap_th,&FAX,&temp_line,Log);
+		if(flag && temp_line!=(*next_line)){	// cambia el valor de next line al primer cambio
+			flag=0;
+			(*next_line)=temp_line;
+		}
 		if (Overflow >1){
 			fprintf(Log,"Overlflow in read_lin\n");
 			return 2;
@@ -445,18 +472,21 @@ unsigned complete_data(FILE *In_file, unsigned *flanco_A, unsigned *flanco_B,uns
 			return 2;
 		}
 		}
-		FAX= flanco_A[(*fin)-1];
+		//	como hacer para que sea la próxima añadida?
+// 		FAX= flanco_A[(*fin)-1];
 	}
 // 		printf("Echo 3.f \n");
 	return Overflow;
 }
 
-int read_line(FILE *In_file, unsigned *flanco_A, unsigned *flanco_B,unsigned *line_ID, unsigned *factor, unsigned adj_list[][Adj_list_max_size],unsigned *adj_list_sizes, unsigned *fin,unsigned overlap_th, FILE *Log){
+//	next_line regresa el offset de la linea que se leyó, si las coordenadas son distintas
+int read_line(FILE *In_file, unsigned *flanco_A, unsigned *flanco_B,unsigned *line_ID, unsigned *factor, unsigned adj_list[][Adj_list_max_size],unsigned *adj_list_sizes, unsigned *fin,unsigned overlap_th,unsigned *X_Index, unsigned *next_line, FILE *Log){
 	
 	char Dummy1[Str_len]={0};
 	char Dummy2[Str_len]={0};
 	unsigned FAN=0,FBN=0;
 	unsigned Overflow= 0;
+	unsigned temp_line=ftell(In_file);
 	//	Leer linea
 	unsigned line_number = ftell(In_file);
 	if(fscanf(In_file,"%s\t%u\t%u\t%[^\n]s\n",Dummy1,&FAN,&FBN,Dummy2)!= 4){
@@ -464,22 +494,31 @@ int read_line(FILE *In_file, unsigned *flanco_A, unsigned *flanco_B,unsigned *li
 		return 1;
 	}
 // 	printf("%s\t%u\t%u\t%s\n",Dummy1,FAN,FBN,Dummy2);
-	
+	(*X_Index)=FAN;
 	
 	if(*fin == 0){
 		//	Lee primera linea
 		Overflow = add_element(flanco_A, flanco_B, line_ID, line_number, adj_list, adj_list_sizes, fin,overlap_th,FAN, FBN, Log);
 		factor[(*fin)-1]++;
+		(*next_line)=temp_line;
 // 		printf("Echo 4.1\tFAN=%u\tFBN=%u\tF_AN=%u\tF_BN=%u\n",FAN,FBN,flanco_A[0],flanco_B[0]);
 	}else{
 		//	Condiciones de addición:
-		unsigned condition1=0,condition2=0;
-		unsigned fin_1=(*fin)-1;
-		long int FAP = flanco_A[fin_1];
-		long int FBP = flanco_B[fin_1];
-		long int FANI=FAN, FBNI=FBN;
-		condition1 =((FBNI-FANI) > (((FBP-FAP)*overlap_th)/100) ); //	Evita añadir cosas muy pequeñas
-		condition2 =(FBNI < ((((FBP*100)+(FANI*(overlap_th-100)))/(overlap_th))+1));	// evita añadir cosas muy grandes
+		int condition1=0,condition2=0;
+		int fin_1=(*fin)-1;
+		int FAP=flanco_A[fin_1];
+		int FBP=flanco_B[fin_1];
+		int FA0=flanco_A[0];
+		int FB0=flanco_B[0];
+		int FANI=FAN, FBNI=FBN;
+		
+		//	la próxima linea diferente a la referencia [0] es:
+		if(FA0 !=FAN || FB0 !=FBN){
+			(*next_line)=temp_line;
+		}
+		
+		condition1 =(((FBNI-FANI)*100) > ((FB0-FA0)*overlap_th) ); //	Evita añadir cosas muy pequeñas
+		condition2 =((100*(FB0-FANI))>(overlap_th*(FBNI-FANI)));	// evita añadir cosas muy grandes
 		if(condition1 && condition2){
 			
 			if(FAP !=FAN || FBP !=FBN){
@@ -505,7 +544,7 @@ unsigned add_element(unsigned *flanco_A, unsigned *flanco_B,unsigned *line_ID,un
 	for (i=0;i< *fin ; i++){
 		int per_ida = percentage_overlap(i,*fin,flanco_A,flanco_B);
 		int per_regreso = percentage_overlap(*fin,i,flanco_A,flanco_B);
-// 		printf("ida = %d \t regreso = %d\n",per_ida,per_regreso);
+		
 		if(per_ida > overlap_th && per_regreso > overlap_th){
 			if(adj_list_sizes[i] >= Adj_list_max_size||adj_list_sizes[*fin] >= Adj_list_max_size){
 				fprintf(Log,"AjList overflow\n");
@@ -513,6 +552,7 @@ unsigned add_element(unsigned *flanco_A, unsigned *flanco_B,unsigned *line_ID,un
 				return 1;
 				
 			}
+			
 			add_edge_adj_list( adj_list,adj_list_sizes, i,*fin);
 // 			matrix[i][*fin]=matrix[*fin][i]=1;
 		}
@@ -582,14 +622,6 @@ unsigned in_class(unsigned *cluster,unsigned cluster_length,unsigned *line_ID , 
 	//	If not, then add
 	copy_array(cluster_ID,Classes[Classes_size],cluster_length);
 	Classes_sizes[Classes_size]=cluster_length;
-// // 	printf("classes size = %u\n",Classes_size);
-// 	for (i=0;i<cluster_length;i++){
-// // 		printf("%u:",cluster[i]);
-// // 		printf("%u:",cluster_ID[i]);
-// // 		Classes[Classes_size][i]=cluster_ID[i];
-// // 		printf("%u\t",Classes[Classes_size][i]);
-// 	}
-// 	printf("\n");
 	
 	return 0;
 	
@@ -619,7 +651,7 @@ unsigned max(unsigned a , unsigned b){
 	return b;
 }
 
-int print_cluster(unsigned *flanco_A, unsigned *flanco_B, unsigned *factor, unsigned fin, unsigned *cluster, unsigned cluster_length, char *Chr){
+int print_cluster(unsigned *flanco_A, unsigned *flanco_B, unsigned *factor, unsigned fin, unsigned *cluster, unsigned cluster_length, char *Chr,unsigned score_th){
 	unsigned max_coord=flanco_A[0];
 	unsigned i = 0, score = 0;
 // 	printf("cluster _len= %u\n",cluster_length);
@@ -630,7 +662,9 @@ int print_cluster(unsigned *flanco_A, unsigned *flanco_B, unsigned *factor, unsi
 		score += factor[index];
 		max_coord = max(max_coord,flanco_B[index]);
 	}
-	printf("%s\t%u\t%u\t%u\n",Chr,flanco_A[0],max_coord,score);
+	if(score >= score_th){
+		printf("%s\t%u\t%u\t%u\n",Chr,flanco_A[0],max_coord,score);
+	}
 	
 	return 0;
 }
