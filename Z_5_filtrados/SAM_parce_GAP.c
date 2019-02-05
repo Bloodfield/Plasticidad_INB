@@ -246,7 +246,7 @@ int call_GAP(FILE *output,char *CIGAR,unsigned coordenada, unsigned C_min, unsig
 	
 	//	Maquina de estados
 	
-	printf("C2 inicial = %u\n",C2);
+// 	printf("C2 inicial = %u\n",C2);
 	
 	char	state	= 'A';
 	i=0;
@@ -329,7 +329,7 @@ int call_GAP(FILE *output,char *CIGAR,unsigned coordenada, unsigned C_min, unsig
 	}
 	
 	//	Ultimo paso
-	printf("C1 = %u, C2 = %u, Gap = %u\n",C1,C2,G);
+// 	printf("C1 = %u, C2 = %u, Gap = %u\n",C1,C2,G);
 	//	Test -> print
 	if(C1 >= C_min && C2 >= C_min && G >= G_min && G <= G_max){
 		inicio	= coordenada + C1;
