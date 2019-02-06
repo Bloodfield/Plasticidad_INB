@@ -23,5 +23,7 @@ gcc -o ../Allelic_Filter Z_6_Comparaciones/Allelic_Filter.c
 
 cp Z_1_DataBase_Genomes/SRA/sra_par_download.sge $HOME/sra_pipe_download.sge
 cp Z_5_filtrados/Circular.sge $HOME/Filter.sge
+cp Z_6_Comparaciones/BED_histogram.sge $HOME/BED_histogram.sge
+cp Z_6_Comparaciones/bed2hist.r $HOME/bin/bed2hist.r
 
 echo Finish

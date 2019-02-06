@@ -1,0 +1,67 @@
+#!/bin/bash
+# Run job through bash shell
+#$ -S /bin/bash
+#
+# Your job name
+#$ -N BED_histogram
+#
+# Use current working directory
+#$ -cwd
+#
+# Join stdout and stderr
+#$ -j y
+#
+# Send an email after the job has finished
+#$ -m e
+#$ -M echavezaparicio@gmail.com
+#
+
+##---------------------------------------------------------
+#	DESCRIPCIÓN
+#   
+#   
+#	Importante:
+#   
+#	IN:
+#
+#	OUT:
+#									También hace el análisis del perfil de deleciones
+#
+##---------------------------------------------------------
+
+##---------------------------------------------------------
+#	USO
+#	
+#
+##---------------------------------------------------------
+
+##---------------------------------------------------------
+#	TO DO LIST
+#	
+##---------------------------------------------------------
+
+
+########	ZONA DE CONFIGURACIÓN
+
+####	Variables de entrada
+
+#	Nombre del archivo BED con extensión
+name=""
+
+
+#Dirección padre de los archivos a usar (aquí debe estar el indice de segemehl)
+HOME="/mnt/Timina/mhernandez/echavez"
+#Habilitación de scripts personales
+PATH=$PATH:$HOME/bin
+
+########	ZONA DE SCRIPT
+
+# If modules are needed, source modules environment (Do not delete the next line):
+. /etc/profile.d/modules.sh
+
+module load gcc
+module load bedtools
+module load r/3.5.2
+
+
+bedtools genomecov -dz -i ${name} -g $HOME/bin/human.hg38.genome | Rscript $HOME/bin/bed2hist.r ${name}
