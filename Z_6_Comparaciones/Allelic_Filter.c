@@ -6,7 +6,7 @@
  * 	Funcionalizal main
  */
 #include <stdio.h>
-
+#include <stdlib.h>
 //	0_Core
 #define Log_name "Log.txt"
 #define Str_len	40
@@ -49,10 +49,12 @@ int main(int argc, char *argv[]){
 	
 	fprintf(Log,"Name_Overlap : %s \n",argv[1]);
 	fprintf(Log,"Name_bedcov : %s \n",argv[2]);
-	fprintf(Log,"Threshold : %f \n",argv[3]);
+	fprintf(Log,"Threshold : %f \n",atof(argv[3]));
+// 	fprintf(Log,"Threshold : %f \n",argv[3]);
 	Overlap=argv[1];
 	bedcov=argv[2];
-	sscanf(argv[3],"%f",&th);
+// 	sscanf(argv[3],"%f",&th);
+	th=atof(argv[3]);
 	
 	//	Abrir y probar archivos
 	
