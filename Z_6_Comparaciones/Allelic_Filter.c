@@ -55,6 +55,7 @@ int main(int argc, char *argv[]){
 	bedcov=argv[2];
 // 	sscanf(argv[3],"%f",&th);
 	th=atof(argv[3]);
+	fprintf(Log,"Threshold : %f \n",th);
 	
 	//	Abrir y probar archivos
 	
