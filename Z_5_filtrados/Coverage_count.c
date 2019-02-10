@@ -3,13 +3,14 @@
 #define MAX_ARR 500000
 #define Log_name "Log.txt"
 #define Str_len	40
+#define n_chr	460
 
 //	Sistema
 int print_help();
 
 //	Algoritmo
-int Coverage_Count(FILE *bed2bam_fh);
-int fill_buffer(char *Chr_read,char *Chr_last, int inicio,int *Line_coord_1, int *Line_coord_2,int *size,FILE *bed2bam_fh);
+int Coverage_Count();
+int fill_buffer(char *Chr_read,char *Chr_last, int inicio,int *Line_coord_1, int *Line_coord_2,int *size);
 int count_score(int *Line_coord_1, int *Line_coord_2,int *Count,int limit,int inicio,int fin,int cover_score);
 int print_buffer(int *Line_coord_1, int *Line_coord_2,int *Count,int limit,int *size,char *Chr_read,int fin);
 
@@ -29,7 +30,7 @@ int recorrer_array(int *array , int size, int n);
 
 //	Globales
 FILE *Log;
-
+FILE *bed2bam_fh;
 
 int main(int argc, char *argv[]){
 	Log = fopen(Log_name,"a");
@@ -48,7 +49,7 @@ int main(int argc, char *argv[]){
 	
 	//	Abrir y probar archivos
 	
-	FILE *bed2bam_fh;
+	
 	bed2bam_fh= fopen(bed2bam,"r");
 	
 	int Watchdog =0;
@@ -60,7 +61,7 @@ int main(int argc, char *argv[]){
 	}
 	
 	//	Programa
-	Watchdog = Coverage_Count(bed2bam_fh);
+	Watchdog = Coverage_Count();
 	
 	if(Watchdog){
 		fprintf(Log,"Failled algorithm\n");
@@ -99,7 +100,7 @@ int print_help(){
 	return 0;
 }
 
-int Coverage_Count(FILE *bed2bam_fh){
+int Coverage_Count(){
 	int Line_coord_1[MAX_ARR]={0};
 	int Line_coord_2[MAX_ARR]={0};
 	int Count[MAX_ARR]={0};
@@ -120,7 +121,7 @@ int Coverage_Count(FILE *bed2bam_fh){
 			return 1;
 		}
 		
-		Watchdog = fill_buffer(Chr_read,Chr_last,fin,Line_coord_1, Line_coord_2,&size,bed2bam_fh);
+		Watchdog = fill_buffer(Chr_read,Chr_last,fin,Line_coord_1, Line_coord_2,&size);
 		if(Watchdog){
 			fprintf(Log,"Failled fill buffer\n");
 			fclose(bed2bam_fh);
@@ -172,20 +173,40 @@ int Coverage_Count(FILE *bed2bam_fh){
 int print_buffer(int *Line_coord_1, int *Line_coord_2,int *Count,int limit,int *size,char *Chr_read,int fin){
 	int temp_lim=limit;
 	int i=0;
-	for(i=0;i<temp_lim;i++){
-		int LC1 = Line_coord_1[i];
-		int LC2 = Line_coord_2[i];
-		int Count_temp = Count[i];
-		if(LC2 <= fin){
+	if(limit < *size){
+		for(i=0;i<temp_lim;i++){
+			int LC1 = Line_coord_1[i];
+			int LC2 = Line_coord_2[i];
+			int Count_temp = Count[i];
 			printf("%s\t%d\t%d\t%d\n",Chr_read,LC1,LC2,Count_temp);
 			recorrer_array(Line_coord_1,*size,i);
 			recorrer_array(Line_coord_2,*size,i);
 			recorrer_array(Count,*size,i);
 			temp_lim--;
 			(*size)--;
+			i--;
 			if(temp_lim<0){
 				fprintf(Log,"Error in print_buffer\n");
 				return 1;
+			}
+		}
+	}else{
+		for(i=0;i<temp_lim;i++){
+			int LC1 = Line_coord_1[i];
+			int LC2 = Line_coord_2[i];
+			int Count_temp = Count[i];
+			if(LC2 <= fin){
+				printf("%s\t%d\t%d\t%d\n",Chr_read,LC1,LC2,Count_temp);
+				recorrer_array(Line_coord_1,*size,i);
+				recorrer_array(Line_coord_2,*size,i);
+				recorrer_array(Count,*size,i);
+				temp_lim--;
+				(*size)--;
+				i--;
+				if(temp_lim<0){
+					fprintf(Log,"Error in print_buffer\n");
+					return 1;
+				}
 			}
 		}
 	}
@@ -233,7 +254,7 @@ int max(int a, int b){
 	return b;
 }
 
-int fill_buffer(char *Chr_read, char *Chr_last,int fin,int *Line_coord_1, int *Line_coord_2,int *size,FILE *bed2bam_fh){
+int fill_buffer(char *Chr_read, char *Chr_last,int fin,int *Line_coord_1, int *Line_coord_2,int *size){
 	
 	char Chr[Str_len]={0};
 	int Coord1=0;
