@@ -20,7 +20,7 @@ int print_help(FILE *Log);
 
 //	Algoritmo
 int read_bedcov(FILE *bedcov_fh, char Chr[][Str_len], int *flanco_A, int *flanco_B, int *cuenta, char Chr_names[][Str_len], int *Chr_ID, int *table_len, int *Chr_len, FILE *Log);
-int Filter(FILE *Overlap_fh, char Chr[][Str_len], int *flanco_A, int *flanco_B, int *cuenta, char Chr_names[][Str_len], int *Chr_ID, int table_len, int Chr_len,int th, FILE *Log);
+int Filter(FILE *Overlap_fh, char Chr[][Str_len], int *flanco_A, int *flanco_B, int *cuenta, char Chr_names[][Str_len], int *Chr_ID, int table_len, int Chr_len,float th, FILE *Log);
 int get_cover(char *Chr_search,int inicio,int fin, char Chr[][Str_len], int *flanco_A, int *flanco_B, int *cuenta, char Chr_names[][Str_len], int *Chr_ID, int table_len, int Chr_len);
 
 //	Arrays
@@ -202,7 +202,7 @@ int copy_Array(char *Str1,char *Str2){
 	}
 }
 
-int Filter(FILE *Overlap_fh, char Chr[][Str_len], int *flanco_A, int *flanco_B, int *cuenta, char Chr_names[][Str_len], int *Chr_ID, int table_len, int Chr_len,int th, FILE *Log){
+int Filter(FILE *Overlap_fh, char Chr[][Str_len], int *flanco_A, int *flanco_B, int *cuenta, char Chr_names[][Str_len], int *Chr_ID, int table_len, int Chr_len,float th, FILE *Log){
 	
 	float landscape_coverage=0.0, del_coverage=0.0;
 	float ratio=0.0;
@@ -242,7 +242,7 @@ int Filter(FILE *Overlap_fh, char Chr[][Str_len], int *flanco_A, int *flanco_B, 
 		// 		printf("ratio = %0.6f\n",ratio);
 		
 		//	check and print
-		if((ratio < 1-th && ratio >0.5+th) || (ratio <0.5-th && ratio >th)){
+		if((ratio < 1.0-th && ratio >0.5+th) || (ratio <0.5-th && ratio > th)){
 			printf("%s\t%u\t%u\t%.5f\t%u\n",Chr_search,inicio,fin,ratio,overlap_score_del);
 		}
 	}
