@@ -120,7 +120,7 @@ int Coverage_Count(){
 			fprintf(Log,"Archivo : Not a BED graph format in the stdin file\n");
 			return 1;
 		}
-		
+// 		printf("A\tChr_read = %s\t Chr_last = %s\n",Chr_read,Chr_last);
 		Watchdog = fill_buffer(Chr_read,Chr_last,fin,Line_coord_1, Line_coord_2,&size);
 		if(Watchdog){
 			fprintf(Log,"Failled fill buffer\n");
@@ -128,6 +128,7 @@ int Coverage_Count(){
 			fclose(Log);
 			return 1;
 		}
+// 		printf("B\tChr_read = %s\t Chr_last = %s\n",Chr_read,Chr_last);
 		
 // 		printf("Limit buff = %d\n",fin);
 		int i=0, j=0;
@@ -292,7 +293,7 @@ int fill_buffer(char *Chr_read, char *Chr_last,int fin,int *Line_coord_1, int *L
 		}
 		
 	}
-	str_copy(Chr,Chr_last);
+	if(!feof(bed2bam_fh)){str_copy(Chr,Chr_last);}
 	
 	return 0;
 }
@@ -315,7 +316,6 @@ int str_clear(char *Str){
 	int i = 0;
 	for(i=0; i < Str_len;i++){
 		Str[i]=0;
-		i++;
 	}
 	return 0;
 }
