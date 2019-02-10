@@ -49,6 +49,7 @@ int main(int argc, char *argv[]){
 	
 	fprintf(Log,"Name_Overlap : %s \n",argv[1]);
 	fprintf(Log,"Name_bedcov : %s \n",argv[2]);
+	fprintf(Log,"Threshold : %f \n",argv[3]);
 	Overlap=argv[1];
 	bedcov=argv[2];
 	sscanf(argv[3],"%f",&th);

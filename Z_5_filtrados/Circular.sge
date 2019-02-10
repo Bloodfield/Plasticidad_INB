@@ -591,8 +591,8 @@ HOME="/mnt/Timina/mhernandez/echavez"
 #Habilitación de scripts personales
 PATH=\$PATH:\$HOME/bin
 
-module load htslib/1.2.1
-module load samtools
+module load gcc
+module load bedtools
 
 ########	ZONA SCRIPT"
 
@@ -657,8 +657,11 @@ echo 2bam
 sort -k1V -k2,3n -u ${name}_splitreads_2bam.bed > ${name}_splitreads_2bam_sort.bed
 echo 2bam_sorted
 
-samtools bedcov -j ${name}_splitreads_2bam_sort.bed ${name}_sorted.bam  > ${name}_splitreads_bedcov.bed
-echo bedcov
+bedtools genomecov -split -bg -ibam ${name}_sorted.bam \
+| sort -k1V -k2,3n \
+| Coverage_count ${name}_splitreads_2bam_sort.bed \
+| sort -k1V -k2,3n > ${name}_splitreads_bedcov.bed
+echo coverages obtained
 
 Allelic_Filter ${name}_splitreads_Overlap.bed ${name}_splitreads_bedcov.bed 0.025 > ${name}_NotAllel.bed
 echo Allelic_Filter Done
