@@ -208,8 +208,8 @@ int read_bedcov(  int *flanco_A, int *flanco_B, int *cuenta, int *table_len, cha
 		
 		//	Get line
 		int inicio=0, fin=0, cover_score=0;
-		char Chr_read[Str_len]={0};
-		if(fscanf(bedcov_fh,"%s\t%u\t%u\t%u\n",Chr_read,&inicio,&fin,&cover_score)!= 4){
+// 		char Chr_read[Str_len]={0};
+		if(fscanf(bedcov_fh,"%s\t%u\t%u\t%u\n",Chr_previous,&inicio,&fin,&cover_score)!= 4){
 			fprintf(Log,"Archivo : Not a BED_Coverage format in the bedcov file\n");
 			return 1;
 		}
