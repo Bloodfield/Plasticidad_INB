@@ -45,8 +45,8 @@
 
 ####	Variables de entrada
 
-#	Nombre del archivo BED con extensión
-name="SRR822853_NotAllel.bed"
+#	Nombre de la corrida
+name="SRR822853"
 
 
 #Dirección padre de los archivos a usar (aquí debe estar el indice de segemehl)
@@ -64,4 +64,10 @@ module load bedtools
 module load r/3.5.2
 
 
-bedtools genomecov -dz -i ${name} -g $HOME/bin/human.hg38.genome | Rscript $HOME/bin/bed2hist.r ${name}
+bedtools genomecov -dz -i ${name}_NotAllel.bed -g $HOME/bin/human.hg38.genome | Rscript $HOME/bin/bed2hist.r ${name}_NotAllel.bed
+
+module load htslib/1.2.1
+module load samtools
+
+samtools view -bh -L ${name}_NotAllel.bed ${name}_sorted.bam > ${name}_Fitered_view.bam
+samtools index ${name}_Fitered_view.bam
