@@ -46,7 +46,7 @@
 ####	Variables de entrada
 
 #	Nombre del archivo BED con extensión
-name=""
+name="SRR822853_NotAllel.bed"
 
 
 #Dirección padre de los archivos a usar (aquí debe estar el indice de segemehl)

@@ -15,7 +15,7 @@ img_height=350;
 #	Read Files
 bed_table = read.table("stdin");
 
-centromere_coords="centromere_coords.bed"
+centromere_coords=paste(path.expand("~"),"/bin/centromere_coords.bed",sep="")
 centromere_table = read.table(centromere_coords);
 row.names(centromere_table) <- centromere_table[,1];
 centromere_table <- centromere_table[,2-3]

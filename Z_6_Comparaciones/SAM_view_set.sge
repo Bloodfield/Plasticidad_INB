@@ -3,7 +3,7 @@
 #$ -S /bin/bash
 #
 # Your job name
-#$ -N BED_histogram
+#$ -N SAM_view_set
 #
 # Use current working directory
 #$ -cwd
@@ -46,7 +46,7 @@
 ####	Variables de entrada
 
 #	Nombre de los archivos bam y bed sin extensión
-BAM="SRR822857_sort"
+BAM="SRR822857_sorted"
 BED="SRR822857_splitreads_bedcov"
 
 
@@ -63,5 +63,5 @@ PATH=$PATH:$HOME/bin
 module load htslib/1.2.1
 module load samtools
 
-samtools view -Lbh ${BED}.bed ${BAM}.bam > ${BED}_view.bam
+samtools view -bh -L ${BED}.bed ${BAM}.bam > ${BED}_view.bam
 samtools index ${BED}_view.bam
