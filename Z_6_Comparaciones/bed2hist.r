@@ -20,7 +20,7 @@ centromere_table = read.table(centromere_coords);
 row.names(centromere_table) <- centromere_table[,1];
 centromere_table <- centromere_table[,2-3]
 
-Chr_end = "human.hg38.genome"
+Chr_end = paste(path.expand("~"),"/bin/human.hg38.genome",sep="")
 Chr_end_table = read.table(Chr_end);
 row.names(Chr_end_table) <- Chr_end_table[,1]
 # Chr_end_table <- Chr_end_table[,2]
