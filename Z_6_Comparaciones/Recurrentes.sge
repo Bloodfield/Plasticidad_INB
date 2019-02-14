@@ -40,12 +40,11 @@
 #	
 ##---------------------------------------------------------
 
-declare -A Experimentos
 ########	ZONA DE CONFIGURACIÓN
 
 ####	Variables de entrada
 
-Experimentos=("SRR822853" "SRR730950" "SRR3290534")
+Experimentos=("SRR822853" "SRR733087" "SRR3325526")
 
 #	BEDTOOLS
 # Reciprical fraction to give a overlap
@@ -79,11 +78,11 @@ do
 	do
 	if [ "$k" != "$l" ]
 		then 
-		temp="$temp $HOME/${l}_file/${l}_1_cured_AlS_splitreads_Bloq.bed"
+		temp="$temp $HOME/${l}_file/${l}_NotAllel.bed"
 		fi
 	done
 	bedtools intersect -wa -wb \
-		-a $HOME/${k}_file/${k}_1_cured_AlS_splitreads_Bloq.bed \
+		-a $HOME/${k}_file/${k}_NotAllel.bed \
 		-b ${temp} \
 		-sorted \
 		-filenames \
@@ -91,49 +90,44 @@ do
 	
 	#	revisa cuantos experimentos avalan las deleciones en ${i}_${k}_Intersect.bed
 	#	Si se rcambia Del_Overlap, entonces puede que no sea necesario el primer cut
-	cut -f1-5 ${k}_Intersect.bed | uniq | cut -f1-3 | uniq -c  > ${k}_Freq.bed
+	cut -f1-6 ${k}_Intersect.bed | uniq | cut -f1-5 | uniq -c  > ${k}_Freq.bed
 
 	#	después se revisa la frecuencia de intersectados
 	cat ${k}_Freq.bed | tr -s " " | cut -d" " -f2 | sort -k1n | uniq -c > ${k}_Freq_numExp.txt
 	#	Obtinene las longitudes de cada deleción 
-	awk -v OFS='\t' '{print $2,$3,$4,$4-$3}' ${k}_Freq.bed > ${k}_Len.bed
+	awk -v OFS='\t' '{print $1,$2,$3-$2,$4,$5}' ${k}_Freq.bed > ${k}_Len.bed
 
 	#	Se obtienen las frecuencias de longitudes
-	cut -f4  ${k}_Len.bed | sort -n | uniq -c > ${k}_Len_Freq.txt
+	cut -f3  ${k}_Len.bed | sort -n | uniq -c > ${k}_Len_Freq.txt
 done
 
 #	Obtiene todas las deleciones presentes en al menos 2 experimentos
 cat *_Freq.bed | tr -s " " | cut -d" " -f3- | sort -k1,1 -k1.4n -k2,3n | uniq > Deletions_Uniq.bed
 
 #	Obtiene las longitudes
-awk -v OFS='\t' '{print $1,$2,$3,$3-$2}' Deletions_Uniq.bed > Deletions_Uniq_Len.bed
+awk -v OFS='\t' '{print $1,$2,$3-$2,$4,$5}' Deletions_Uniq.bed > Deletions_Uniq_Len.bed
 
 #	Se obtienen las frecuencias de longitudes
-cut -f4  Deletions_Uniq_Len.bed | sort -n | uniq -c > Deletions_Uniq_Len_Freq.txt
+cut -f3  Deletions_Uniq_Len.bed | sort -n | uniq -c > Deletions_Uniq_Len_Freq.txt
 
 #	Se obtienen las deleciones que superen el umbral de muestra	# tem 9, pero hay que automatizar 
-awk -v OFS='\t' -v th="${th}" '{if ($3-$2 >= th) print $1,$2,$3}' Deletions_Uniq.bed  > Deletions_View.bed
+# awk -v OFS='\t' -v th="${th}" '{if ($3-$2 >= th) print $1,$2,$3}' Deletions_Uniq.bed  > Deletions_View.bed
 #	Obtiene las deleciones junto con el rango de los flancos a 20 nt
-awk -v OFS='\t' '{print $1,$2-20,$3+20}' Deletions_View.bed  > Deletions_ViewAndFlanc.bed
+awk -v OFS='\t' '{print $1,$2-20,$3+20}' Deletions_Uniq.bed  > Deletions_ViewAndFlanc.bed
 
-#	Cuchareo de Merge
+#	Onteniendo bam de regiones implicadas
 bedtools merge -i Deletions_ViewAndFlanc.bed > Deletions_ViewAndFlanc_merge.bed
 rm Deletions_ViewAndFlanc.bed
 mv Deletions_ViewAndFlanc_merge.bed Deletions_ViewAndFlanc.bed
+
+#	Obteniendo bam reducido sobre las delciones
 
 module load htslib/1.2.1
 module load samtools
 
 for k in "${Experimentos[@]}"
 do
-	samtools view -L Deletions_ViewAndFlanc.bed $HOME/${k}_file/${k}_1_sorted.bam -o ${k}_view.bam
-	
+	samtools view -L Deletions_ViewAndFlanc.bed $HOME/${k}_file/${k}_sorted.bam -o ${k}_view.bam
 	samtools index ${k}_view.bam
-	export DISPLAY=:0.0
-	java -mx512m -jar $HOME/bin/BamView_v1.2.11.jar -a ${k}_view.bam
-# 	samtools sort -o ${k}_view_sort.bam ${k}_view.bam
-# 	samtools index ${k}_view_sort.bam
-#	export DISPLAY=:0.0
-# 	java -mx512m -jar $HOME/bin/BamView.jar -a ${k}_view_sort.bam
 	
 done

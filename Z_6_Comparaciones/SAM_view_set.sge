@@ -47,7 +47,7 @@
 
 #	Nombre de los archivos bam y bed sin extensión
 BAM="SRR822857_sorted"
-BED="SRR822857_splitreads_bedcov"
+BED="SRR822857_NotAllel"
 
 
 #Dirección padre de los archivos a usar (aquí debe estar el indice de segemehl)
