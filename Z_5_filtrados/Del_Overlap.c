@@ -286,7 +286,7 @@ int index_file(){
 	int inicio=0, fin=0;
 	char Chr_previous[Str_len]={0};
 	
-	while(!feof(In_file)){
+	while(feof(In_file)==0){
 		
 		//	temporal ftell
 		int temp=ftell(In_file);
