@@ -294,7 +294,8 @@ int index_file(){
 		//	Get line
 		char Chr_read[Str_len]={0};
 		char Dummy2[Str_len]={0};
-		if(fscanf(In_file,"%s\t%u\t%u\t%[^\n]s\n",Chr_read,&inicio,&fin,Dummy2)!= 4){
+		if(fscanf(In_file,"%s\t%d\t%d\t%[^\n]s\n",Chr_read,&inicio,&fin,Dummy2)!= 4){
+			fprintf(Log,"%s\t%d\t%d\t%s\n",Chr_read,inicio,fin,Dummy2);
 			fprintf(Log,"Archivo : Not a BED file as input\n");
 			return 1;
 		}
@@ -465,7 +466,7 @@ int read_line(int overlap_th,int *X_Index, int *next_line){
 	int temp_line=ftell(In_file);
 	//	Leer linea
 	int line_number = ftell(In_file);
-	if(fscanf(In_file,"%s\t%u\t%u\t%[^\n]s\n",Dummy1,&FAN,&FBN,Dummy2)!= 4){
+	if(fscanf(In_file,"%s\t%d\t%d\t%[^\n]s\n",Dummy1,&FAN,&FBN,Dummy2)!= 4){
 		
 		return 1;
 	}
@@ -522,7 +523,7 @@ int read_line_2(int overlap_th,int *X_Index, int *next_line){
 	int temp_line=ftell(In_file);
 	//	Leer linea
 	int line_number = ftell(In_file);
-	if(fscanf(In_file,"%s\t%u\t%u\t%[^\n]s\n",Dummy1,&FAN,&FBN,Dummy2)!= 4){
+	if(fscanf(In_file,"%s\t%d\t%d\t%[^\n]s\n",Dummy1,&FAN,&FBN,Dummy2)!= 4){
 		
 		return 1;
 	}
@@ -705,7 +706,7 @@ int print_cluster(int *cluster, int cluster_length, char *Chr,int score_th){
 		coord_b = min(coord_b,flanco_B[index]);
 	}
 	if(score >= score_th){
-		printf("%s\t%u\t%u\t%u\n",Chr,coord_a,coord_b,score);
+		printf("%s\t%d\t%d\t%d\n",Chr,coord_a,coord_b,score);
 	}
 	
 	return 0;
