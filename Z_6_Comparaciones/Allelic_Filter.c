@@ -168,7 +168,7 @@ int index_bedcov(){
 		
 		//	Get line
 		char Chr_read[Str_len]={0};
-		if(fscanf(bedcov_fh,"%s\t%u\t%u\t%u\n",Chr_read,&inicio,&fin,&cover_score)!= 4){
+		if(fscanf(bedcov_fh,"%s\t%d\t%d\t%d\n",Chr_read,&inicio,&fin,&cover_score)!= 4){
 			fprintf(Log,"Archivo : Not a BED_Coverage format in the bedcov file\n");
 			return 1;
 		}
@@ -209,7 +209,7 @@ int read_bedcov(  int *flanco_A, int *flanco_B, int *cuenta, int *table_len, cha
 		//	Get line
 		int inicio=0, fin=0, cover_score=0;
 // 		char Chr_read[Str_len]={0};
-		if(fscanf(bedcov_fh,"%s\t%u\t%u\t%u\n",Chr_previous,&inicio,&fin,&cover_score)!= 4){
+		if(fscanf(bedcov_fh,"%s\t%d\t%d\t%d\n",Chr_previous,&inicio,&fin,&cover_score)!= 4){
 			fprintf(Log,"Archivo : Not a BED_Coverage format in the bedcov file\n");
 			return 1;
 		}
@@ -269,7 +269,7 @@ int Filter(float th){
 		int inicio=0, fin=0;
 		int overlap_score_del=0;
 		char chr_new[Str_len]={0};
-		if(fscanf(Overlap_fh,"%s\t%u\t%u\t%u\n",chr_new,&inicio,&fin,&overlap_score_del)!= 4){
+		if(fscanf(Overlap_fh,"%s\t%d\t%d\t%d\n",chr_new,&inicio,&fin,&overlap_score_del)!= 4){
 			fprintf(Log,"Archivo : Not a BED_Overlap format in the Overlap file\n");
 			return 1;
 		}
@@ -308,7 +308,7 @@ int Filter(float th){
 		//	check and print
 		Whatchdog = (ratio < 1.0-th && ratio >0.5+th) || (ratio <0.5-th && ratio > th);
 		if(Whatchdog){
-			printf("%s\t%u\t%u\t%.5f\t%u\n",chr_new,inicio,fin,ratio,overlap_score_del);
+			printf("%s\t%d\t%d\t%.5f\t%d\n",chr_new,inicio,fin,ratio,overlap_score_del);
 		}
 	}
 	
