@@ -602,7 +602,7 @@ int complete_data(int overlap_th, int *next_line){
 	
 	//	Add FAN < FA_read
 	int Overflow = 0;
-	
+	temp_line=-1;
 	while(temp_line!=(*next_line)  && Overflow == 0){
 		Overflow=read_line(overlap_th,&begin,&temp_line,FA0,FB0);
 		if (Overflow >1){
