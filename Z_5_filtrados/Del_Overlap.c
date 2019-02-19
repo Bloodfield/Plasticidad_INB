@@ -458,7 +458,7 @@ int Del_Overlap(int overlap_th, int score_th){
 		current_line= next_line;
 		clear_Chr_print();
 		//	Completa las lecturas con los datos del archivo
-		if(Overflow ==0){
+		if(Overflow < 2){
 			Overflow=complete_data( overlap_th,&next_line);
 // 			printf("Echo 2.1 \n");
 		}
@@ -717,18 +717,20 @@ int read_line(int overlap_th,int *X_Index, int *next_line, int FA0, int FB0){
 
 int read_line_2(int overlap_th,int *X_Index, int *next_line, int FA0,int FB0){
 	
-	char Dummy1[Str_len]={0};
+	char Chr_line[Str_len]={0};
 	char Dummy2[Str_len]={0};
 	int FAN=0,FBN=0;
 	int Overflow= 0;
 	int temp_line=ftell(In_file);
 	//	Leer linea
 	int line_number = ftell(In_file);
-	if(fscanf(In_file,"%s\t%d\t%d\t%[^\n]s\n",Dummy1,&FAN,&FBN,Dummy2)!= 4){
-		
+	if(fscanf(In_file,"%s\t%d\t%d\t%[^\n]s\n",Chr_line,&FAN,&FBN,Dummy2)!= 4){
 		return 1;
 	}
-	// 	printf("%s\t%u\t%u\t%s\n",Dummy1,FAN,FBN,Dummy2);
+	if(Array_eq(Chr_line,Chr_print)){
+		return 1;
+	}
+	// 	printf("%s\t%u\t%u\t%s\n",Chr_line,FAN,FBN,Dummy2);
 	(*X_Index)=FAN;
 	
 	if(fin == 0){

@@ -631,9 +631,14 @@ if $habilita_sge
 		Chr_lines=$(grep -r  "rmsk_${Chromosome}.txt" $HOME/rmsk/files_lines.txt | tr -s " " | cut -f2 -d" ")
 		
 		printf "
+
+if [ -f ${name}_${Chromosome}_splitreads.bed ]
+then
 cat ${name}_${Chromosome}_splitreads.bed | \
 RMFilter $HOME/rmsk/rmsk_${Chromosome}.bin ${Chr_lines} ${qbases} ${percentage} | \
 sort -n -k2,3 >> ${name}_splitreads_RM_sorted.bed
+fi
+
 echo ${Chromosome}
 " >> RMFilter_${name}.sge
 		done
@@ -641,7 +646,7 @@ echo ${Chromosome}
 	#	Filtro de Overlap y  Alelos
 	printf "
 
-Del_Overlap ${name}_${Chromosome}_splitreads_RM_sorted.bed ${score_min} ${overlap_percentaje} > ${name}_splitreads_Overlap.bed
+Del_Overlap ${name}_splitreads_RM_sorted.bed ${score_min} ${overlap_percentaje} > ${name}_splitreads_Overlap.bed
 
 cut -f1-3 ${name}_splitreads_Overlap.bed > ${name}_splitreads_2bam.bed
 awk -v OFS='\t' '{print \$1,\$2-20,\$2}' ${name}_splitreads_Overlap.bed >> ${name}_splitreads_2bam.bed
