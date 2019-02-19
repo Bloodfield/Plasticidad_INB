@@ -633,11 +633,14 @@ int complete_data(int overlap_th, int *next_line){
 	int flag = 1;
 	
 	while(begin < lim_buffer && Overflow == 0){
+// 		fprintf(Log," %d begin < lim_buffer %d \n",begin,lim_buffer);
+		
 		//	Obten la información de la linea
 		Overflow=read_line_2(overlap_th,&begin,&temp_line,FA0,FB0);
 		if(flag && temp_line!=(*next_line)){	// cambia el valor de next line al primer cambio
 			flag=0;
 			(*next_line)=temp_line;
+// 			fprintf(Log," Echo complete data : change next line\n");
 		}
 		if (Overflow >1){
 			fprintf(Log,"Overlflow in read_lin\n");
@@ -691,6 +694,7 @@ int read_line(int overlap_th,int *X_Index, int *next_line, int FA0, int FB0){
 		
 		//	la próxima linea diferente avalor anterior:
 		if(FAP !=FAN || FBP !=FBN){
+// 			fprintf(Log," Read line : change next line\n");
 			(*next_line)=line_number;
 		}
 		
@@ -727,7 +731,7 @@ int read_line_2(int overlap_th,int *X_Index, int *next_line, int FA0,int FB0){
 	if(fscanf(In_file,"%s\t%d\t%d\t%[^\n]s\n",Chr_line,&FAN,&FBN,Dummy2)!= 4){
 		return 1;
 	}
-	if(Array_eq(Chr_line,Chr_print)){
+	if(! Array_eq(Chr_line,Chr_print)){
 		return 1;
 	}
 	// 	printf("%s\t%u\t%u\t%s\n",Chr_line,FAN,FBN,Dummy2);
