@@ -592,13 +592,13 @@ int complete_data(int overlap_th, int *next_line){
 	fprintf(Log,"Complete Data : chr line = %ld\n",ftell(In_file));
 	
 	//	Skip FAN < FAN_min
-	int temp_line=0;
+	int temp_line=ftell(In_file);
 	int lim_buffer = end - ((end - begin)*(100.0/overlap_th))-1;
 	fprintf(Log,"buffer limit = %d\n",lim_buffer);
 	begin=0;
 	while(begin < lim_buffer ){
 		temp_line = ftell(In_file);
-		fprintf(Log,"complete data : cicle in skip\n");
+// 		fprintf(Log,"complete data : cicle in skip\n");
 		if(fscanf(In_file,"%s\t%d\t%d\t%s %s %s\n",Chr_current,&begin,&end,Dummy2,Dummy3,Dummy4)!= 6){
 			fprintf(Log,"%s\t%d\t%d Did not found it minimum\n ",Chr_current,begin,end);
 			return 1;
@@ -622,7 +622,9 @@ int complete_data(int overlap_th, int *next_line){
 		//	Revisa el orden
 		if((fin)>1){
 			if(flanco_A[(fin)-1] < flanco_A[(fin)-2]){
-				fprintf(Log,"File : Bed file not sorted\n");
+				fprintf(Log,"%d\t%d\t%d\n",line_ID[(fin)-2],flanco_A[(fin)-2],flanco_B[(fin)-2]);
+				fprintf(Log,"%d\t%d\t%d\n",line_ID[(fin)-1],flanco_A[(fin)-1],flanco_B[(fin)-1]);
+				fprintf(Log,"Complete data 2 : Bed file not sorted\n"); // TODO:	WTF??
 				// 				printf("Bedfile not sorted\n");
 				fclose(Log);
 				return 2;
@@ -659,7 +661,7 @@ int complete_data(int overlap_th, int *next_line){
 		//	Revisa el orden
 		if((fin)>1){
 			if(flanco_A[(fin)-1] < flanco_A[(fin)-2]){
-				fprintf(Log,"Bed file not sorted\n");
+				fprintf(Log,"Complete data 2 : Bed file not sorted\n");
 				err_message();
 				fclose(Log);
 				return 2;
@@ -705,8 +707,8 @@ int read_line(int overlap_th,int *X_Index, int *next_line, int FA0, int FB0){
 		
 		//	la próxima linea diferente avalor anterior:
 		if(FAP !=FAN || FBP !=FBN){
-			fprintf(Log," Read line : change next line\n");
-			fprintf(Log,"%d\t%s\t%d\t%d\t%s %s %s\n",line_number,Dummy1,FAN,FBN,Dummy2,Dummy3,Dummy4);
+// 			fprintf(Log," Read line : change next line\n");
+// 			fprintf(Log,"%d\t%s\t%d\t%d\t%s %s %s\n",line_number,Dummy1,FAN,FBN,Dummy2,Dummy3,Dummy4);
 			(*next_line)=line_number;
 		}
 		
@@ -715,7 +717,7 @@ int read_line(int overlap_th,int *X_Index, int *next_line, int FA0, int FB0){
 		condition2 = (percentage_overlap(FAN,FBN,FA0,FB0) > overlap_th );
 // 		condition1 =(((FBN-FA0)*(100.0/overlap_th)) > (FB0-FA0) ); //	restringe el minimo del flanco derecho.
 // 		condition2 =(((100.0/overlap_th)*(FB0-FA0))>(FBN-FAN));	//	restringe el máximo del flanco derecho.
-		fprintf(Log,"Add element : cond 1\t%d\tcond2\t%d\n",condition1,condition2);
+// 		fprintf(Log,"Add element : cond 1\t%d\tcond2\t%d\n",condition1,condition2);
 		if(condition1 && condition2){
 			
 			if(FAP !=FAN || FBP !=FBN){
