@@ -839,11 +839,11 @@ int print_cluster(int *cluster, int cluster_length, int score_th){
 		fprintf(Log,"Queue error in add element \n");
 		return 1;
 	}
-	int coord_a=flanco_A[0];
-	int coord_b=flanco_B[0];
+	int coord_a=flanco_A[cluster[0]];
+	int coord_b=flanco_B[cluster[0]];
 	int i = 0, score = 0;
 	// 	printf("cluster _len= %u\n",cluster_length);
-	for (i=0;i<cluster_length;i++){
+	for (i=1;i<cluster_length;i++){
 		int index = cluster[i];
 		if (index >= fin){return -1;}
 		// 		printf("score= %u\n",factor[index]);
