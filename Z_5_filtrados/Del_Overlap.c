@@ -578,7 +578,7 @@ int complete_data(int overlap_th, int *next_line){
 		fprintf(Log,"Error in next line = %d\n ",*next_line);
 		return 1;
 	}
-	fprintf(Log,"complete data : Line : %s\t%d\t%d\t%s %s %s\n",Chr_current,begin,end,Dummy2,Dummy3,Dummy4);
+// 	fprintf(Log,"complete data : Line : %s\t%d\t%d\t%s %s %s\n",Chr_current,begin,end,Dummy2,Dummy3,Dummy4);
 	int FA0= begin;
 	int FB0= end;
 	int idx = search(Chr_current,Chr_names,Chr_len);
@@ -588,13 +588,13 @@ int complete_data(int overlap_th, int *next_line){
 	}
 	fseek(In_file,Chr_ID[idx],SEEK_SET);
 	copy_Str(Chr_names[idx],Chr_print);
-	fprintf(Log,"complete data : Chr_print = %s\n",Chr_print);
-	fprintf(Log,"Complete Data : chr line = %ld\n",ftell(In_file));
+// 	fprintf(Log,"complete data : Chr_print = %s\n",Chr_print);
+// 	fprintf(Log,"Complete Data : chr line = %ld\n",ftell(In_file));
 	
 	//	Skip FAN < FAN_min
 	int temp_line=ftell(In_file);
 	int lim_buffer = end - ((end - begin)*(100.0/overlap_th))-1;
-	fprintf(Log,"buffer limit = %d\n",lim_buffer);
+// 	fprintf(Log,"buffer limit = %d\n",lim_buffer);
 	begin=0;
 	while(begin < lim_buffer ){
 		temp_line = ftell(In_file);
@@ -605,10 +605,10 @@ int complete_data(int overlap_th, int *next_line){
 		}
 	}
 	
-	fprintf(Log,"complete data : last line after FAN_min:\n");
-	fprintf(Log,"complete data : %s\t%d\t%d\t%s %s %s\n",Chr_current,begin,end,Dummy2,Dummy3,Dummy4);
+// 	fprintf(Log,"complete data : last line after FAN_min:\n");
+// 	fprintf(Log,"complete data : %s\t%d\t%d\t%s %s %s\n",Chr_current,begin,end,Dummy2,Dummy3,Dummy4);
 	fseek(In_file,temp_line,SEEK_SET);
-	fprintf(Log,"Complete Data : first line = %ld\n",ftell(In_file));
+// 	fprintf(Log,"Complete Data : first line = %ld\n",ftell(In_file));
 	
 	//	Add FAN < FA_read
 	int Overflow = 0;
@@ -622,9 +622,9 @@ int complete_data(int overlap_th, int *next_line){
 		//	Revisa el orden
 		if((fin)>1){
 			if(flanco_A[(fin)-1] < flanco_A[(fin)-2]){
-				fprintf(Log,"%d\t%d\t%d\n",line_ID[(fin)-2],flanco_A[(fin)-2],flanco_B[(fin)-2]);
-				fprintf(Log,"%d\t%d\t%d\n",line_ID[(fin)-1],flanco_A[(fin)-1],flanco_B[(fin)-1]);
-				fprintf(Log,"Complete data 2 : Bed file not sorted\n"); // TODO:	WTF??
+// 				fprintf(Log,"%d\t%d\t%d\n",line_ID[(fin)-2],flanco_A[(fin)-2],flanco_B[(fin)-2]);
+// 				fprintf(Log,"%d\t%d\t%d\n",line_ID[(fin)-1],flanco_A[(fin)-1],flanco_B[(fin)-1]);
+				fprintf(Log,"Complete data 2 : Bed file not sorted\n");
 				// 				printf("Bedfile not sorted\n");
 				fclose(Log);
 				return 2;
@@ -642,7 +642,7 @@ int complete_data(int overlap_th, int *next_line){
 	
 	lim_buffer = FA0 +((FB0-FA0)*(overlap_th/100.0))+1;	// +1 es por el redondeo
 	int flag = 1;
-	fprintf(Log,"buffer limit = %d\n",lim_buffer);
+// 	fprintf(Log,"buffer limit = %d\n",lim_buffer);
 	
 	while(begin < lim_buffer && Overflow == 0){
 // 		fprintf(Log," %d begin < lim_buffer %d \n",begin,lim_buffer);

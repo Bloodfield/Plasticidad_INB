@@ -237,6 +237,7 @@ module load samtools
 
 echo Align Paired
 segemehl.x -i ${IdxSegemehl} -S -s -d $GenomaRef -q ${name}_1_cured_seqtk.fastq.gz -p ${name}_2_cured_seqtk.fastq.gz -t $n_threads |  \
+	samtools view -F 0x604
 	samtools sort -o ${name}_sorted.bam -@ $((${n_threads}-1))
 	samtools index ${name}_sorted.bam
 
