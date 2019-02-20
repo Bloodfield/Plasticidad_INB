@@ -40,7 +40,7 @@ int search(char *Str,char Array[][Str_len],int Array_len);
 int clear_Chr_print();
 
 //	Calculos de programa
-int percentage_overlap(int reference , int query );
+int percentage_overlap(int FAR,int FBR , int FAQ,int FBQ );
 int test_cc(int *cluster,int cluster_length);
 
 //	Sistema
@@ -343,37 +343,38 @@ int test_cc(int *cluster,int cluster_length){
 	return 1;
 }
 
-int percentage_overlap(int reference , int query ){
-	if(reference >= Array_Size || query >= Array_Size){
-		fprintf(Log,"Err percentaje calculation = Stack Overflow\n");
-		return 1;
-	}
-	int FAR = flanco_A[reference];
-	int FBR = flanco_B[reference];
-	int FAQ = flanco_A[query];
-	int FBQ = flanco_B[query];
+int percentage_overlap(int FAR,int FBR , int FAQ,int FBQ ){
+// int percentage_overlap(int reference , int query ){
+// 	if(reference >= Array_Size || query >= Array_Size){
+// 		fprintf(Log,"Err percentaje calculation = Stack Overflow\n");
+// 		return 1;
+// 	}
+// 	int FAR = flanco_A[reference];
+// 	int FBR = flanco_B[reference];
+// 	int FAQ = flanco_A[query];
+// 	int FBQ = flanco_B[query];
 	// 	printf("ref \t %u\t%u\nque\t%u\t%u\n",FAR,FBR,FAQ,FBQ);
 	if (FBQ < FAR || FAQ > FBR){return 0;}
 	int divisor = FBR - FAR;
 	int temp= 0;
 	if (FAQ < FAR){
 		if(FBQ < FBR){
-			temp = (FBQ-FAR )*100;
+			temp = (FBQ-FAR );
 			// 			printf("\ttemp1=%u\n",temp);
 		}else{
 			return 100;
 		}
 	}else{
 		if(FBQ < FBR){
-			temp = (FBQ-FAQ )*100;
+			temp = (FBQ-FAQ );
 			// 			printf("\ttemp3=%u\n",temp);
 		}else{
-			temp = (FBR-FAQ )*100;
+			temp = (FBR-FAQ );
 			// 			printf("\ttemp4=%u\n",temp);
 		}
 	}
 	// 	printf("temp=%u \tdivisor = %u\n",temp,divisor);
-	temp /= divisor;
+	temp *= (100.0/divisor);
 	return temp;
 }
 
@@ -451,6 +452,7 @@ int Del_Overlap(int overlap_th, int score_th){
 		}
 		clear_array(adj_list_sizes,Array_Size);
 		clear_array(factor,Array_Size);
+		clear_array(line_ID,Array_Size);
 		fin=0;
 		
 		//	Coloca la linea de lectura correspondiente
@@ -569,11 +571,14 @@ int complete_data(int overlap_th, int *next_line){
 	//	Find file line for chromosome
 	char Chr_current[Str_len]={0};
 	char Dummy2[Str_len]={0};
+	char Dummy3[Str_len]={0};
+	char Dummy4[Str_len]={0};
 	int begin=0, end=0;
-	if(fscanf(In_file,"%s\t%d\t%d\t%[^\n]s\n",Chr_current,&begin,&end,Dummy2)!= 4){
+	if(fscanf(In_file,"%s\t%d\t%d\t%s %s %s\n",Chr_current,&begin,&end,Dummy2,Dummy3,Dummy4)!= 6){
 		fprintf(Log,"Error in next line = %d\n ",*next_line);
 		return 1;
 	}
+	fprintf(Log,"complete data : Line : %s\t%d\t%d\t%s %s %s\n",Chr_current,begin,end,Dummy2,Dummy3,Dummy4);
 	int FA0= begin;
 	int FB0= end;
 	int idx = search(Chr_current,Chr_names,Chr_len);
@@ -583,27 +588,32 @@ int complete_data(int overlap_th, int *next_line){
 	}
 	fseek(In_file,Chr_ID[idx],SEEK_SET);
 	copy_Str(Chr_names[idx],Chr_print);
-// 	fprintf(Log,"Complete Data : chr line = %ld\n",ftell(In_file));
+	fprintf(Log,"complete data : Chr_print = %s\n",Chr_print);
+	fprintf(Log,"Complete Data : chr line = %ld\n",ftell(In_file));
 	
 	//	Skip FAN < FAN_min
 	int temp_line=0;
-	int lim_buffer = end + (((begin - end)*100)/overlap_th)-1;
+	int lim_buffer = end - ((end - begin)*(100.0/overlap_th))-1;
+	fprintf(Log,"buffer limit = %d\n",lim_buffer);
 	begin=0;
 	while(begin < lim_buffer ){
 		temp_line = ftell(In_file);
-		if(fscanf(In_file,"%s\t%d\t%d\t%[^\n]s\n",Chr_current,&begin,&end,Dummy2)!= 4){
+		fprintf(Log,"complete data : cicle in skip\n");
+		if(fscanf(In_file,"%s\t%d\t%d\t%s %s %s\n",Chr_current,&begin,&end,Dummy2,Dummy3,Dummy4)!= 6){
 			fprintf(Log,"%s\t%d\t%d Did not found it minimum\n ",Chr_current,begin,end);
 			return 1;
 		}
 	}
 	
+	fprintf(Log,"complete data : last line after FAN_min:\n");
+	fprintf(Log,"complete data : %s\t%d\t%d\t%s %s %s\n",Chr_current,begin,end,Dummy2,Dummy3,Dummy4);
 	fseek(In_file,temp_line,SEEK_SET);
-// 	fprintf(Log,"Complete Data : first line = %ld\n",ftell(In_file));
+	fprintf(Log,"Complete Data : first line = %ld\n",ftell(In_file));
 	
 	//	Add FAN < FA_read
 	int Overflow = 0;
 	temp_line=-1;
-	while(temp_line!=(*next_line)  && Overflow == 0){
+	while(temp_line<(*next_line)  && Overflow == 0){
 		Overflow=read_line(overlap_th,&begin,&temp_line,FA0,FB0);
 		if (Overflow >1){
 			fprintf(Log,"Read : Problem getting line\n");
@@ -628,9 +638,9 @@ int complete_data(int overlap_th, int *next_line){
 // 	fprintf(Log," %d temp == %d next\n",temp_line,*next_line);
 	//	Add FAN < FAN_max	(get next_line)
 	
-	int ref_node = fin - 1;
-	lim_buffer = FA0 +((FB0-FA0)*overlap_th/100)+1;	// +1 es por el redondeo
+	lim_buffer = FA0 +((FB0-FA0)*(overlap_th/100.0))+1;	// +1 es por el redondeo
 	int flag = 1;
+	fprintf(Log,"buffer limit = %d\n",lim_buffer);
 	
 	while(begin < lim_buffer && Overflow == 0){
 // 		fprintf(Log," %d begin < lim_buffer %d \n",begin,lim_buffer);
@@ -664,12 +674,14 @@ int read_line(int overlap_th,int *X_Index, int *next_line, int FA0, int FB0){
 	
 	char Dummy1[Str_len]={0};
 	char Dummy2[Str_len]={0};
+	char Dummy3[Str_len]={0};
+	char Dummy4[Str_len]={0};
 	int FAN=0,FBN=0;
 	int Overflow= 0;
 // 	int temp_line=ftell(In_file);
 	//	Leer linea
 	int line_number = ftell(In_file);
-	if(fscanf(In_file,"%s\t%d\t%d\t%[^\n]s\n",Dummy1,&FAN,&FBN,Dummy2)!= 4){
+	if(fscanf(In_file,"%s\t%d\t%d\t%s %s %s\n",Dummy1,&FAN,&FBN,Dummy2,Dummy3,Dummy4)!= 6){
 		
 		return 1;
 	}
@@ -685,7 +697,6 @@ int read_line(int overlap_th,int *X_Index, int *next_line, int FA0, int FB0){
 		// 		printf("Echo 4.1\tFAN=%u\tFBN=%u\tF_AN=%u\tF_BN=%u\n",FAN,FBN,flanco_A[0],flanco_B[0]);
 	}else{
 		//	Condiciones de addición:
-		int condition1=0,condition2=0;
 		int fin_1=(fin)-1;
 		int FAP=flanco_A[fin_1];
 		int FBP=flanco_B[fin_1];
@@ -694,13 +705,17 @@ int read_line(int overlap_th,int *X_Index, int *next_line, int FA0, int FB0){
 		
 		//	la próxima linea diferente avalor anterior:
 		if(FAP !=FAN || FBP !=FBN){
-// 			fprintf(Log," Read line : change next line\n");
+			fprintf(Log," Read line : change next line\n");
+			fprintf(Log,"%d\t%s\t%d\t%d\t%s %s %s\n",line_number,Dummy1,FAN,FBN,Dummy2,Dummy3,Dummy4);
 			(*next_line)=line_number;
 		}
 		
-		condition1 =(((FBN-FA0)*100) > ((FB0-FA0)*overlap_th) ); //	restringe el minimo del flanco derecho.
-		condition2 =((100*(FB0-FA0))>(overlap_th*(FBN-FAN)));	//	restringe el máximo del flanco derecho.
-// 		fprintf(Log,"Add element : cond 1\t%d\tcond2\t%d\n",condition1,condition2);
+		int condition1=0,condition2=0;
+		condition1 = (percentage_overlap(FA0,FB0,FAN,FBN) > overlap_th );
+		condition2 = (percentage_overlap(FAN,FBN,FA0,FB0) > overlap_th );
+// 		condition1 =(((FBN-FA0)*(100.0/overlap_th)) > (FB0-FA0) ); //	restringe el minimo del flanco derecho.
+// 		condition2 =(((100.0/overlap_th)*(FB0-FA0))>(FBN-FAN));	//	restringe el máximo del flanco derecho.
+		fprintf(Log,"Add element : cond 1\t%d\tcond2\t%d\n",condition1,condition2);
 		if(condition1 && condition2){
 			
 			if(FAP !=FAN || FBP !=FBN){
@@ -723,15 +738,19 @@ int read_line_2(int overlap_th,int *X_Index, int *next_line, int FA0,int FB0){
 	
 	char Chr_line[Str_len]={0};
 	char Dummy2[Str_len]={0};
+	char Dummy3[Str_len]={0};
+	char Dummy4[Str_len]={0};
 	int FAN=0,FBN=0;
 	int Overflow= 0;
-	int temp_line=ftell(In_file);
+// 	int temp_line=ftell(In_file);
 	//	Leer linea
 	int line_number = ftell(In_file);
-	if(fscanf(In_file,"%s\t%d\t%d\t%[^\n]s\n",Chr_line,&FAN,&FBN,Dummy2)!= 4){
+	if(fscanf(In_file,"%s\t%d\t%d\t%s %s %s\n",Chr_line,&FAN,&FBN,Dummy2,Dummy3,Dummy4)!= 6){
 		return 1;
 	}
 	if(! Array_eq(Chr_line,Chr_print)){
+		fprintf(Log,"Chr end \n");
+		(*next_line)=line_number;
 		return 1;
 	}
 	// 	printf("%s\t%u\t%u\t%s\n",Chr_line,FAN,FBN,Dummy2);
@@ -741,11 +760,10 @@ int read_line_2(int overlap_th,int *X_Index, int *next_line, int FA0,int FB0){
 		//	Lee primera linea
 		Overflow = add_element( line_number, overlap_th,FAN, FBN);
 		factor[(fin)-1]++;
-		(*next_line)=temp_line;
+		(*next_line)=line_number;
 		// 		printf("Echo 4.1\tFAN=%u\tFBN=%u\tF_AN=%u\tF_BN=%u\n",FAN,FBN,flanco_A[0],flanco_B[0]);
 	}else{
 		//	Condiciones de addición:
-		int condition1=0,condition2=0;
 		int fin_1=(fin)-1;
 		int FAP=flanco_A[fin_1];
 		int FBP=flanco_B[fin_1];
@@ -755,11 +773,14 @@ int read_line_2(int overlap_th,int *X_Index, int *next_line, int FA0,int FB0){
 		
 		//	la próxima linea diferente la enterior:
 		if(FAP !=FAN || FBP !=FBN){
-			(*next_line)=temp_line;
+			(*next_line)=line_number;
 		}
 		
-		condition1 =(((FBNI-FANI)*100) > ((FB0-FA0)*overlap_th) ); //	Evita añadir cosas muy pequeñas
-		condition2 =((100*(FB0-FANI))>(overlap_th*(FBNI-FANI)));	// evita añadir cosas muy grandes
+		int condition1=0,condition2=0;
+		condition1 = (percentage_overlap(FA0,FB0,FAN,FBN) > overlap_th );
+		condition2 = (percentage_overlap(FAN,FBN,FA0,FB0) > overlap_th );
+// 		condition1 =(((FBNI-FANI)*100) > ((FB0-FA0)*overlap_th) ); //	Evita añadir cosas muy pequeñas
+// 		condition2 =((100*(FB0-FANI))>(overlap_th*(FBNI-FANI)));	// evita añadir cosas muy grandes
 		if(condition1 && condition2){
 			
 			if(FAP !=FAN || FBP !=FBN){
@@ -792,8 +813,8 @@ int add_element(int line_number ,int overlap_th,int FA, int FB){
 	}
 	int i = 0;
 	for (i=0;i< fin ; i++){
-		int per_ida = percentage_overlap(i,fin);
-		int per_regreso = percentage_overlap(fin,i);
+		int per_ida = percentage_overlap(flanco_A[i],flanco_B[i],flanco_A[fin],flanco_B[fin]);
+		int per_regreso = percentage_overlap(flanco_A[fin],flanco_B[fin],flanco_A[i],flanco_B[i]);
 		
 		if(per_ida > overlap_th && per_regreso > overlap_th){
 			if(adj_list_sizes[i] >= Adj_list_max_size||adj_list_sizes[fin] >= Adj_list_max_size){
