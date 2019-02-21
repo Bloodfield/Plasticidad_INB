@@ -226,7 +226,7 @@ int call_GAP(FILE *output,char *CIGAR,unsigned coordenada, unsigned C_min, unsig
 	unsigned temp = 0;
 	
 	
-	//	Completa C2 en mase a los match que hay en el CIGAR
+	//	Completa C2 en base a los match que hay en el CIGAR
 	
 	while (CIGAR[i]!= 0 && i < 200){
 		
@@ -261,7 +261,7 @@ int call_GAP(FILE *output,char *CIGAR,unsigned coordenada, unsigned C_min, unsig
 			switch (state){
 			case 'A':
 				if(contained(c, C_List,5)){
-					C1 +=  temp;
+					DC2 +=  temp;
 					temp = 0;
 					state = 'B';
 				}else{
@@ -272,12 +272,14 @@ int call_GAP(FILE *output,char *CIGAR,unsigned coordenada, unsigned C_min, unsig
 		//	Clevarage 1
 			case 'B':
 				if(contained(c,C_List,5)){
-					C1 +=  temp;
+					DC2 +=  temp;
 					temp = 0;
 				}else if(contained(c,G_List,3)){
 					G +=  temp;
 					state = 'C';
 					temp = 0;
+					C2 -= DC2;
+					C1 += DC2;
 				}
 				break;
 		
@@ -290,7 +292,6 @@ int call_GAP(FILE *output,char *CIGAR,unsigned coordenada, unsigned C_min, unsig
 					DC2 +=   temp;
 					temp = 0;
 					state = 'D';
-// 					C2 -= C1;
 				}
 				break;
 		
@@ -303,7 +304,8 @@ int call_GAP(FILE *output,char *CIGAR,unsigned coordenada, unsigned C_min, unsig
 					
 // 					printf("C1 = %u, C2 = %u, Gap = %u\n",C1,C2,G);
 					//	Test -> print
-					if(C1 >= C_min && C2 >= C_min){//if(C1 >= C_min && C2 >= C_min && G >= G_min && G <= G_max){
+					
+					if(C1 >= C_min && C2 >= C_min && G > 0){//if(C1 >= C_min && C2 >= C_min && G >= G_min && G <= G_max){
 						inicio	= coordenada + C1;
 						fin	= inicio + G;
 						fprintf(output, "%s\t%u\t%u\t%s\n",Chromosome,inicio,fin,Label);
