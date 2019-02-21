@@ -13,7 +13,7 @@
 int clear_char(char *string, int size);
 int get_line(char *string,int *size);
 int get_info(char *line, int size,char *Name, char *Chromosome, char *CIGAR, unsigned *inicio );
-int call_GAP(FILE *output,char *CIGAR,unsigned coordenada, unsigned C_min, unsigned G_min, unsigned G_max, char *Chromosome, char *Label);
+int call_GAP(FILE *output,char *CIGAR,unsigned coordenada, unsigned C_min, char *Chromosome, char *Label);
 int contained(char element,char *C_List,int size);
 	
 int main(int argc, char *argv[]){
@@ -24,23 +24,19 @@ int main(int argc, char *argv[]){
 	Log = fopen(Log_name,"a");
 	char Base_name[300]={0};
 	unsigned int n_flanco = 10;
-	unsigned int min_gap= 1;
-	unsigned int max_gap= 100000;
 	
-	if (argc != 5){
+	if (argc != 3){
 		fprintf(Log,"Se tiene que escribir:\n");
 		fprintf(Log,"\t Nombre base sin espacios \n");
 		fprintf(Log,"\t Número de bases mínima para considerar un flanco \n");
-		fprintf(Log,"\t Número de bases mínima para detectar un gap \n");
-		fprintf(Log,"\t Número de bases máxima para detectar un gap \n");
-		fprintf(Log,"$ SAM_parce_GAP nombre n_flanco n_min_gap n_max_gap  \n");
+		fprintf(Log,"$ SAM_parce_GAP nombre n_flanco  \n");
 		fprintf(Log,"Emeplo:\n");
 		fprintf(Log,"\n");
-		fprintf(Log,"$ SAM_parce_GAP SRR3290534_1_cured 10 1 100000 \n");
+		fprintf(Log,"$ SAM_parce_GAP SRR3290534 20\n");
 		fprintf(Log,"\n");
 		fprintf(Log,"\n");
-		fprintf(Log,"Este archivo el nombre base es \"SRR3290534_1_cured\"\n");
-		fprintf(Log,"Con el cual se llamarán los archivos de salida\n");
+		fprintf(Log,"Este archivo el nombre base es \"SRR3290534\"\n");
+		fprintf(Log,"Con el cual se llamarán los archivos de salida al añadirl el cromosoma\n");
 		fprintf(Log,"\n");
 		fprintf(Log,"\n");
 		fclose(Log);
@@ -50,8 +46,6 @@ int main(int argc, char *argv[]){
 	fprintf(Log,"Name : %s \n",argv[1]);
 	strcpy(Base_name,argv[1]);
 	sscanf (argv[2],"%u",&n_flanco);
-	sscanf (argv[3],"%u",&min_gap);
-	sscanf (argv[4],"%u",&max_gap);
 	
 	//	PARCEO de GAPS
 	
@@ -82,7 +76,7 @@ int main(int argc, char *argv[]){
 			
 			//	Parceo de CIGAR
 // 			printf("CIGAR = %s\n",CIGAR);
-			call_GAP(output,CIGAR,inicio,n_flanco,min_gap, max_gap, Chromosome, Label);
+			call_GAP(output,CIGAR,inicio,n_flanco, Chromosome, Label);
 			
 			
 			fclose(output);
@@ -206,7 +200,7 @@ int get_info(char *line, int size,char *Name, char *Chromosome, char *CIGAR, uns
 	return 0;
 }
 
-int call_GAP(FILE *output,char *CIGAR,unsigned coordenada, unsigned C_min, unsigned G_min, unsigned G_max, char *Chromosome, char *Label){
+int call_GAP(FILE *output,char *CIGAR,unsigned coordenada, unsigned C_min,  char *Chromosome, char *Label){
 	
 // 	fprintf(output,"HelloooooOOooOOOOOoo\n");
 	
@@ -333,7 +327,7 @@ int call_GAP(FILE *output,char *CIGAR,unsigned coordenada, unsigned C_min, unsig
 	//	Ultimo paso
 // 	printf("C1 = %u, C2 = %u, Gap = %u\n",C1,C2,G);
 	//	Test -> print
-	if(C1 >= C_min && C2 >= C_min){//if(C1 >= C_min && C2 >= C_min && G >= G_min && G <= G_max){
+	if(C1 >= C_min && C2 >= C_min && G > 0){//if(C1 >= C_min && C2 >= C_min && G >= G_min && G <= G_max){
 		inicio	= coordenada + C1;
 		fin	= inicio + G;
 		fprintf(output, "%s\t%u\t%u\t%s\n",Chromosome,inicio,fin,Label);

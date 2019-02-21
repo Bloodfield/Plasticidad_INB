@@ -609,7 +609,7 @@ echo File $name
 #	Se realiza el analisis de los CIGAR, y se crean los bed correspondientes a las deleciones
 
 echo parce
-samtools view ${name}_sorted.bam  | SAM_parce_GAP ${name} 10 1 100000
+samtools view ${name}_sorted.bam  | SAM_parce_GAP ${name} 20
 
 #	Parceo de los split read y back splice
 
