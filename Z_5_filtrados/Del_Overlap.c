@@ -45,6 +45,7 @@ int test_cc(int *cluster,int cluster_length);
 
 //	Sistema
 int err_message();
+int print_status(char *variable, int value);
 
 //	Funciones de proceso
 int Del_Overlap(int overlap_th, int score_th);
@@ -395,6 +396,20 @@ int err_message(){
 	return 0;
 }
 
+int print_status(char *variable, int value){
+	fprintf(Log,"line ID\tFlanco A\tFlanco B\tscores\t");
+	int i=0;
+	for (i=0; i< fin; i++){
+		fprintf(Log,"%d\t%d\t%d\t%d\t",line_ID[i],flanco_A[i],flanco_B[i],factor[i]);
+	}
+	fprintf(Log,"\n");
+	fprintf(Log,"node number = %d\n",fin);
+	fprintf(Log,"Classes size = %d\n",Classes_size);
+	fprintf(Log,"Current chr = %s\n",Chr_print);
+	fprintf(Log,"%s : %d\n",variable,value);
+	fprintf(Log,"\n");
+}
+
 //	Funciones de proceso
 
 int index_file(){
@@ -478,8 +493,8 @@ int Del_Overlap(int overlap_th, int score_th){
 		//	Determinar el nodo de referencia
 		int current_node = search_int(current_line,line_ID,fin) ;
 		if(current_node == -1){
-			fprintf(Log,"line ID %d not found\n",current_line);
-			fprintf(Log,"number of nodes = %d\n",fin);
+			fprintf(Log," Err : Del_Overlap : reference not found \n");
+			print_status("Line ID not found", current_line);
 			return 1;
 		}
 		
@@ -500,7 +515,7 @@ int Del_Overlap(int overlap_th, int score_th){
 		//	Purgar Clases
 		int test = purge_classes(current_line);
 		if(test!=0){
-			fprintf(Log,"Purge class failed\n");
+			fprintf(Log,"Err : Del Overlap : Purge class failed\n");
 			return 1;
 			
 		}
@@ -624,8 +639,8 @@ int complete_data(int overlap_th, int *next_line){
 			if(flanco_A[(fin)-1] < flanco_A[(fin)-2]){
 // 				fprintf(Log,"%d\t%d\t%d\n",line_ID[(fin)-2],flanco_A[(fin)-2],flanco_B[(fin)-2]);
 // 				fprintf(Log,"%d\t%d\t%d\n",line_ID[(fin)-1],flanco_A[(fin)-1],flanco_B[(fin)-1]);
-				fprintf(Log,"Complete data 2 : Bed file not sorted\n");
-				// 				printf("Bedfile not sorted\n");
+				fprintf(Log,"Err : Complete data 2 : Unorder BED\n");
+				print_status("position not sorted",line_ID[fin-1] );
 				fclose(Log);
 				return 2;
 			}
@@ -635,6 +650,13 @@ int complete_data(int overlap_th, int *next_line){
 				return 2;
 			}
 		}
+	}
+	if(temp_line != (*next_line)){
+		fprintf(Log,"Err : Complete data 2-3 : Missing reference line\n");
+		print_status("next line",*next_line );
+		fprintf(Log,"temp line = %d\n",temp_line);
+		fclose(Log);
+		return 2;
 	}
 	
 // 	fprintf(Log," %d temp == %d next\n",temp_line,*next_line);
@@ -661,8 +683,8 @@ int complete_data(int overlap_th, int *next_line){
 		//	Revisa el orden
 		if((fin)>1){
 			if(flanco_A[(fin)-1] < flanco_A[(fin)-2]){
-				fprintf(Log,"Complete data 2 : Bed file not sorted\n");
-				err_message();
+				fprintf(Log,"Err : Complete data 3 : Unorder BED\n");
+				print_status("position not sorted",line_ID[fin-1] );
 				fclose(Log);
 				return 2;
 			}
