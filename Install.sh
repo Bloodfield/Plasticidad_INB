@@ -25,11 +25,13 @@ echo "	copiar sge\'s en la carpeta HOME"
 cp Z_1_DataBase_Genomes/SRA/sra_par_download.sge $HOME/sra_pipe_download.sge
 cp Z_5_filtrados/Circular.sge $HOME/Filter.sge
 cp Z_6_Comparaciones/BED_histogram.sge $HOME/BED_histogram.sge
-cp Z_6_Comparaciones/bed2hist.r $HOME/bin/bed2hist.r
 cp Z_6_Comparaciones/SAM_view_set.sge $HOME/SAM_view_set.sge  
 cp Z_6_Comparaciones/Recurrentes.sge $HOME/Recurrentes.sge
 
+cp Z_6_Comparaciones/bed2hist.r $HOME/bin/bed2hist.r
+
 cp Z_6_Comparaciones/human.hg38.genome $HOME/bin/human.hg38.genome
 cp Z_6_Comparaciones/centromere_coords.bed $HOME/bin/centromere_coords.bed
+cp Z_6_Comparaciones/genes_gdc_small_ucsc.bed $HOME/bin/genes_gdc_small_ucsc.bed
 
 echo Finish

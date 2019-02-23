@@ -481,7 +481,7 @@ int Del_Overlap(int overlap_th, int score_th){
 		}
 		//	Si algo falló, regresa el fallo
 		if(Overflow==2){
-			fprintf(Log,"Complete data return non zero sataus\n");
+			fprintf(Log,"Complete data return error sataus\n");
 			return 1;
 		}
 		
@@ -559,6 +559,9 @@ int purge_classes( int ID){
 			for(j=0;j<Classes_sizes[i];j++){
 				Classes[i][j]=Classes[i+offset][j];
 			}
+			for(j=0;j<Clases_adj_max;j++){
+				Classes[i][j]=0;
+			}
 			while(Classes_sizes[i+offset]==0 && i+offset< size-1){
 				offset++;
 			}
@@ -569,7 +572,7 @@ int purge_classes( int ID){
 		
 		//	Vuelve 0 las últimas
 		for(i;i<size;i++){
-			for (j;j<Classes_sizes[i];j++){
+			for (j=0;j<Classes_sizes[i];j++){
 				Classes[i][j]=0;
 			}
 			Classes_sizes[i]=0;
@@ -591,7 +594,7 @@ int complete_data(int overlap_th, int *next_line){
 	int begin=0, end=0;
 	if(fscanf(In_file,"%s\t%d\t%d\t%s %s %s\n",Chr_current,&begin,&end,Dummy2,Dummy3,Dummy4)!= 6){
 		fprintf(Log,"Error in next line = %d\n ",*next_line);
-		return 1;
+		return 2;
 	}
 // 	fprintf(Log,"complete data : Line : %s\t%d\t%d\t%s %s %s\n",Chr_current,begin,end,Dummy2,Dummy3,Dummy4);
 	int FA0= begin;
@@ -599,7 +602,7 @@ int complete_data(int overlap_th, int *next_line){
 	int idx = search(Chr_current,Chr_names,Chr_len);
 	if (idx < 0){
 		fprintf(Log,"Archivo : chromosome %s not found\n",Chr_current);
-		return 1; 
+		return 2; 
 	}
 	fseek(In_file,Chr_ID[idx],SEEK_SET);
 	copy_Str(Chr_names[idx],Chr_print);
@@ -616,7 +619,11 @@ int complete_data(int overlap_th, int *next_line){
 // 		fprintf(Log,"complete data : cicle in skip\n");
 		if(fscanf(In_file,"%s\t%d\t%d\t%s %s %s\n",Chr_current,&begin,&end,Dummy2,Dummy3,Dummy4)!= 6){
 			fprintf(Log,"%s\t%d\t%d Did not found it minimum\n ",Chr_current,begin,end);
-			return 1;
+			return 2;
+		}
+		if(! Array_eq(Chr_current,Chr_print)){
+			fprintf(Log,"%s not complete\n",Chr_print);
+			return 2;
 		}
 	}
 	
@@ -696,58 +703,64 @@ int complete_data(int overlap_th, int *next_line){
 
 int read_line(int overlap_th,int *X_Index, int *next_line, int FA0, int FB0){
 	
-	char Dummy1[Str_len]={0};
+	char Chr_line[Str_len]={0};
 	char Dummy2[Str_len]={0};
 	char Dummy3[Str_len]={0};
 	char Dummy4[Str_len]={0};
 	int FAN=0,FBN=0;
 	int Overflow= 0;
-// 	int temp_line=ftell(In_file);
 	//	Leer linea
 	int line_number = ftell(In_file);
-	if(fscanf(In_file,"%s\t%d\t%d\t%s %s %s\n",Dummy1,&FAN,&FBN,Dummy2,Dummy3,Dummy4)!= 6){
+	if(fscanf(In_file,"%s\t%d\t%d\t%s %s %s\n",Chr_line,&FAN,&FBN,Dummy2,Dummy3,Dummy4)!= 6){
 		
 		return 1;
+	}
+	if(! Array_eq(Chr_line,Chr_print)){
+		// 		fprintf(Log,"Chr end \n");
+		fprintf(Log,"Err : read_line : chromosome ended before expected, incorrect process\n");
+		return 2;
 	}
 	// 	printf("%s\t%u\t%u\t%s\n",Dummy1,FAN,FBN,Dummy2);
 	(*X_Index)=FAN;
 	
 	if(fin == 0){
 		//	Lee primera linea
-		Overflow = add_element( line_number, overlap_th,FAN, FBN);
-		factor[0]++;
+		int condition1=0,condition2=0;
+		condition1 = (percentage_overlap(FA0,FB0,FAN,FBN) > overlap_th );
+		condition2 = (percentage_overlap(FAN,FBN,FA0,FB0) > overlap_th );
+		
+		if(condition1 && condition2){
+			Overflow = add_element(line_number, overlap_th,FAN, FBN);
+			int fin_1=(fin)-1;
+			factor[fin_1]++;
+		}
 		(*next_line)=line_number;
-// 		fprintf(Log,"Add first element : \t%d\t%d\t%d\n",line_number,FAN,FBN);
-		// 		printf("Echo 4.1\tFAN=%u\tFBN=%u\tF_AN=%u\tF_BN=%u\n",FAN,FBN,flanco_A[0],flanco_B[0]);
 	}else{
-		//	Condiciones de addición:
+		//	Valores de linea final
 		int fin_1=(fin)-1;
 		int FAP=flanco_A[fin_1];
 		int FBP=flanco_B[fin_1];
-// 		int FA0=flanco_A[0];
-// 		int FB0=flanco_B[0];
 		
 		//	la próxima linea diferente avalor anterior:
 		if(FAP !=FAN || FBP !=FBN){
 // 			fprintf(Log," Read line : change next line\n");
 // 			fprintf(Log,"%d\t%s\t%d\t%d\t%s %s %s\n",line_number,Dummy1,FAN,FBN,Dummy2,Dummy3,Dummy4);
 			(*next_line)=line_number;
-		}
-		
-		int condition1=0,condition2=0;
-		condition1 = (percentage_overlap(FA0,FB0,FAN,FBN) > overlap_th );
-		condition2 = (percentage_overlap(FAN,FBN,FA0,FB0) > overlap_th );
-// 		condition1 =(((FBN-FA0)*(100.0/overlap_th)) > (FB0-FA0) ); //	restringe el minimo del flanco derecho.
-// 		condition2 =(((100.0/overlap_th)*(FB0-FA0))>(FBN-FAN));	//	restringe el máximo del flanco derecho.
-// 		fprintf(Log,"Add element : cond 1\t%d\tcond2\t%d\n",condition1,condition2);
-		if(condition1 && condition2){
 			
-			if(FAP !=FAN || FBP !=FBN){
+			//	Condiciones para añadir nodo
+			int condition1=0,condition2=0;
+			condition1 = (percentage_overlap(FA0,FB0,FAN,FBN) > overlap_th );
+			condition2 = (percentage_overlap(FAN,FBN,FA0,FB0) > overlap_th );
+			// 		fprintf(Log,"Add element : cond 1\t%d\tcond2\t%d\n",condition1,condition2);
+			if(condition1 && condition2){
+				
 				Overflow = add_element(line_number, overlap_th,FAN, FBN);
-// 				fprintf(Log,"Add element : \t%d\t%d\t%d\n",line_number,FAN,FBN);
+				// 				fprintf(Log,"Add element : \t%d\t%d\t%d\n",line_number,FAN,FBN);
 				fin_1=(fin)-1;	// porque add_element cambia el valor de fin
 				// 			printf("Echo 4.3\n");
+				factor[fin_1]++;
 			}
+		}else{
 			factor[fin_1]++;
 		}
 		// 		printf("Echo 4.2\n");
@@ -773,7 +786,7 @@ int read_line_2(int overlap_th,int *X_Index, int *next_line, int FA0,int FB0){
 		return 1;
 	}
 	if(! Array_eq(Chr_line,Chr_print)){
-		fprintf(Log,"Chr end \n");
+// 		fprintf(Log,"Chr end \n");
 		(*next_line)=line_number;
 		return 1;
 	}
@@ -781,37 +794,32 @@ int read_line_2(int overlap_th,int *X_Index, int *next_line, int FA0,int FB0){
 	(*X_Index)=FAN;
 	
 	if(fin == 0){
-		//	Lee primera linea
-		Overflow = add_element( line_number, overlap_th,FAN, FBN);
-		factor[(fin)-1]++;
-		(*next_line)=line_number;
+		fprintf(Log,"Error : read_line_2 : Not a suitable graph, missing reference node at least \n");
+		return 2;
 		// 		printf("Echo 4.1\tFAN=%u\tFBN=%u\tF_AN=%u\tF_BN=%u\n",FAN,FBN,flanco_A[0],flanco_B[0]);
 	}else{
 		//	Condiciones de addición:
 		int fin_1=(fin)-1;
 		int FAP=flanco_A[fin_1];
 		int FBP=flanco_B[fin_1];
-// 		int FA0=flanco_A[0];
-// 		int FB0=flanco_B[0];
 		int FANI=FAN, FBNI=FBN;
 		
 		//	la próxima linea diferente la enterior:
 		if(FAP !=FAN || FBP !=FBN){
 			(*next_line)=line_number;
-		}
-		
-		int condition1=0,condition2=0;
-		condition1 = (percentage_overlap(FA0,FB0,FAN,FBN) > overlap_th );
-		condition2 = (percentage_overlap(FAN,FBN,FA0,FB0) > overlap_th );
-// 		condition1 =(((FBNI-FANI)*100) > ((FB0-FA0)*overlap_th) ); //	Evita añadir cosas muy pequeñas
-// 		condition2 =((100*(FB0-FANI))>(overlap_th*(FBNI-FANI)));	// evita añadir cosas muy grandes
-		if(condition1 && condition2){
-			
-			if(FAP !=FAN || FBP !=FBN){
+			int condition1=0,condition2=0;
+			condition1 = (percentage_overlap(FA0,FB0,FAN,FBN) > overlap_th );
+			condition2 = (percentage_overlap(FAN,FBN,FA0,FB0) > overlap_th );
+			// 		condition1 =(((FBNI-FANI)*100) > ((FB0-FA0)*overlap_th) ); //	Evita añadir cosas muy pequeñas
+			// 		condition2 =((100*(FB0-FANI))>(overlap_th*(FBNI-FANI)));	// evita añadir cosas muy grandes
+			if(condition1 && condition2){
+				
 				Overflow = add_element(line_number, overlap_th,FAN, FBN);
 				fin_1=(fin)-1;
-				// 			printf("Echo 4.3\n");
+				factor[fin_1]++;
 			}
+		}
+		else{
 			factor[fin_1]++;
 		}
 		// 		printf("Echo 4.2\n");
@@ -861,12 +869,13 @@ int print_cluster(int *cluster, int cluster_length, int score_th){
 		fprintf(Log,"Queue error in add element \n");
 		return 1;
 	}
-	int coord_a=flanco_A[cluster[0]];
-	int coord_b=flanco_B[cluster[0]];
-	int i = 0, score = 0;
+	int index = cluster[0];
+	int coord_a=flanco_A[index];
+	int coord_b=flanco_B[index];
+	int i = 0, score = factor[index];
 	// 	printf("cluster _len= %u\n",cluster_length);
 	for (i=1;i<cluster_length;i++){
-		int index = cluster[i];
+		index = cluster[i];
 		if (index >= fin){return -1;}
 		// 		printf("score= %u\n",factor[index]);
 		score += factor[index];
@@ -885,7 +894,7 @@ int conected_component(int *cluster,int *cluster_length, int node ,int score_th)
 	//	añadir nodo
 	if(add_to_order_array(cluster,cluster_length,node)){
 		fprintf(Log,"Err connected conected_component init \n");
-		return 1;
+		return -1;
 	}
 	
 // 	printf("cluster = [");
@@ -920,24 +929,18 @@ int conected_component(int *cluster,int *cluster_length, int node ,int score_th)
 			test2 += conected_component(cluster,cluster_length,node,score_th);
 		}
 		
-		//	Imprime si es necesario
+		//	Si no se puede formar uno más grande
 		if(test2 == 0){
 			
 			//	Comprueba que sea nueva
 			int test_in_class = in_class(cluster, *cluster_length);
-			if(test_in_class == 2){
+			if(test_in_class == -1){
 				fprintf(Log,"Error in test class\n");
-				return 1;
+				return -1;
 			}
 			if(test_in_class==0){
-				//	Si no esta la clase entonces imprime
+				//	Si no esta las clases entonces imprime
 				print_cluster(cluster, *cluster_length,score_th);
-				if(Classes_size>=Classes_max_size){
-					fprintf(Log,"Class overload\n");
-					return 1; 
-				}
-				//	Añade la clase (in_class ya lo hace)
-				Classes_size++;
 			}
 		}
 		
@@ -959,6 +962,10 @@ int in_class(int *cluster,int cluster_length){
 	//	Obtain line_ID for every element of cluster
 	int cluster_ID[Clases_adj_max]={0};
 	int i =0, j= 0;
+	if(cluster_length >= Clases_adj_max){
+		fprintf(Log,"Err : in_class : p1 : cluster too big\n");
+		return -1;
+	}
 	for (i=0;i<cluster_length;i++){
 		// 		printf("%u:",cluster[i]);
 		cluster_ID[i]=line_ID[cluster[i]];
@@ -977,8 +984,13 @@ int in_class(int *cluster,int cluster_length){
 	}
 	
 	//	If not, then add
+	if(Classes_size>=Classes_max_size){
+		fprintf(Log,"Class overload\n");
+		return -1; 
+	}
 	copy_array(cluster_ID,Classes[Classes_size],cluster_length);
 	Classes_sizes[Classes_size]=cluster_length;
+	Classes_size++;
 	
 	return 0;
 	

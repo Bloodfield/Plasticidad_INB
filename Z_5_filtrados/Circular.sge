@@ -638,7 +638,11 @@ then
 cat ${name}_${Chromosome}_splitreads.bed | \
 RMFilter $HOME/rmsk/rmsk_${Chromosome}.bin ${Chr_lines} ${qbases} ${percentage} | \
 sort -n -k2,3 > ${name}_splitreads_RM_sorted_temp.bed
-Del_Overlap ${name}_splitreads_RM_sorted_temp.bed ${score_min} ${overlap_percentaje} >> ${name}_splitreads_Overlap.bed
+n_lines=\$( wc -l ${name}_splitreads_RM_sorted_temp.bed | cut -f1 -d\" \" )
+	if [ \${n_lines} -gt 1 ]
+	then
+	Del_Overlap ${name}_splitreads_RM_sorted_temp.bed ${score_min} ${overlap_percentaje} | sort -k2,3n -u >> ${name}_splitreads_Overlap.bed
+	fi
 fi
 
 " >> RMFilter_${name}.sge
