@@ -650,6 +650,7 @@ fi
 	
 	#	Filtro de Overlap y  Alelos
 	printf "
+echo Del_Overlap done
 
 cut -f1-3 ${name}_splitreads_Overlap.bed > ${name}_splitreads_2bam.bed
 awk -v OFS='\\\t' '{print \$1,\$2-20,\$2}' ${name}_splitreads_Overlap.bed >> ${name}_splitreads_2bam.bed

@@ -938,11 +938,11 @@ int print_cluster(int *cluster, int cluster_length, int score_th){
 	}
 	if(score >= score_th){
 		printf("%s\t%d\t%d\t%d\n",Chr_print,coord_a,coord_b,score);
-		int i = 0;
-		for (i=0; i < cluster_length;i++){
-			printf("%d,",line_ID[cluster[i]]);
-		}
-		printf("\n");
+// 		int i = 0;
+// 		for (i=0; i < cluster_length;i++){
+// 			printf("%d,",line_ID[cluster[i]]);
+// 		}
+// 		printf("\n");
 	}
 	
 	return 0;
