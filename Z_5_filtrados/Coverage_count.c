@@ -42,9 +42,10 @@ int Count[MAX_ARR]={0};
 int size = 0;
 
 //	*	Objeto de idexado del archivo bedcov_fh
-char Chr_names[n_chr][Str_len];
-int Chr_ID[n_chr];
+char Chr_names[n_chr][Str_len]={0};
+int Chr_ID[n_chr]={0};
 int Chr_len=0;
+int visited_chr[n_chr]={0};
 
 int main(int argc, char *argv[]){
 	Log = fopen(Log_name,"a");
@@ -145,6 +146,7 @@ int Coverage_Count(){
 	while( !feof(stdin)){
 // 		fprintf(Log,"Echo : Coverage_Count : p2_1\n");
 		//	Get line from stdin
+		str_clear(Chr_read);
 		if(scanf("%s\t%d\t%d\t%d\n",Chr_read,&inicio,&fin,&cover_score)!= 4){
 			fprintf(Log,"Archivo : Not a BED graph format in the stdin file\n");
 			return 1;
@@ -184,49 +186,111 @@ int Coverage_Count(){
 			fclose(Log);
 			return 1;
 		}
+	}
+	
+	//	Print remaining Chr
+	int i = 0;
+	int counter = 0;
+	for (i=0;i < Chr_len; i++){
+		if (! visited_chr[i]){
+			char Chr[Str_len]={0};
+			int Coord1=0;
+			int Coord2=0;
+			fseek(bed2bam_fh,Chr_ID[i],SEEK_SET);
+			if(fscanf(bed2bam_fh,"%s\t%d\t%d\n",Chr,&Coord1,&Coord2)!= 3){
+				fprintf(Log,"Err : Coverage_Count : problem reading input\n");
+				return 1;
+			}
+			while( str_eq(Chr,Chr_names[i]) && !feof(bed2bam_fh) ){
+				printf("%s\t%d\t%d\t%d\n",Chr,Coord1,Coord2,0);
+				if(fscanf(bed2bam_fh,"%s\t%d\t%d\n",Chr,&Coord1,&Coord2)!= 3){
+					fprintf(Log,"Err : Coverage_Count : problem reading input\n");
+					return 1;
+				}
+			}
+			if( str_eq(Chr,Chr_names[i]) && feof(bed2bam_fh) ){
+				printf("%s\t%d\t%d\t%d\n",Chr,Coord1,Coord2,0);
+			}
+			counter++;
+		}
 		
-		
+	}
+	if (counter  > 0){
+		fprintf(Log,"Warning : Coverage_Count : 3_0 : %d chromosomes missing in the bed graph input \n",counter);
 	}
 	return 0;
 }
 
 int fill_buffer(char *Chr_read,char *Chr_last, int fin, int *end_chr){
 	
+	char Chr[Str_len]={0};
+	int temp_line = 0;
+	int Coord1=0;
+	int Coord2=0;
+	
 	//	En caso de cambiar de cromosoma
 	if (! str_eq(Chr_last,Chr_read)){
 		
+		//	Add missing lines of chromosome
+		str_copy(Chr_last,Chr);
+// 		printf("Echo : fill_buffer : 1_0 : Add missing lines %s \n",Chr_last);
+		while( str_eq(Chr,Chr_last) && !feof(bed2bam_fh) ){
+// 			printf("Echo : fill_buffer : 1_1 : Add missing lines \n");
+			temp_line=ftell(bed2bam_fh);
+			str_clear(Chr);
+			if(fscanf(bed2bam_fh,"%s\t%d\t%d\n",Chr,&Coord1,&Coord2)!= 3){
+				fprintf(Log,"Err : Fill buffer : problem in line %d\n",temp_line);
+				return 1;
+			}
+			Line_coord_1[size]=Coord1;
+			Line_coord_2[size]=Coord2;
+			size++;
+			
+			if(size >= MAX_ARR){
+				fprintf(Log,"Overload line list\n");
+				return 1;
+			}
+			
+		}
+// 		printf("Echo : fill_buffer : p1_0 : size = %d\n",size);
+		if (!feof(bed2bam_fh) && size > 0){
+			recorrer_tabla(size-1);
+// 			fseek(bed2bam_fh, temp_line,SEEK_SET);
+		}
 		//	Print all buffer
 		
 		while(size > 0){
 			int LC1 = Line_coord_1[0];
 			int LC2 = Line_coord_2[0];
 			int Count_temp = Count[0];
-			printf("%s\t%d\t%d\t%d\n",Chr_read,LC1,LC2,Count_temp);
+			printf("%s\t%d\t%d\t%d\n",Chr_last,LC1,LC2,Count_temp);
 			recorrer_tabla(0);
 		}
 		
 		//	encontrar linea de cromosoma
 		
+// 		printf("Echo : fill_buffer :  New query chr: \"%s\" \n",Chr_read);
 		int idx = search(Chr_read,Chr_names,Chr_len);
 		if (idx == -1){
-// 			fprintf(Log,"Chr \" %s \" not found in bed2bam\n",Chr_read);
+// 			printf("Echo : fill_buffer : \"%s\" not found in bed2bam\n",Chr_read);
 			return 0;
 		}
 		fseek(bed2bam_fh,Chr_ID[idx],SEEK_SET);
+		visited_chr[idx]=1;
 		
 		//	Reset Variables
 // 		printf("Echo : fill_buffer : p1_1 : %s > %s\n",Chr_read,Chr_last);
-// 		printf("Echo : fill_buffer : p1_1 : %s > %s\n",Chr_read,Chr_last);
 		str_copy(Chr_read,Chr_last);
+// 		printf("Echo : full_buffer : New chr found: \"%s\" \n",Chr_last);
 		*end_chr = 0;
 	}
 	
 	//	LLena datos faltantes
-	char Chr[Str_len]={0};
-	int Coord1=0;
-	int Coord2=0;
+	Coord1=0;
+	Coord2=0;
+	str_clear(Chr);
 	str_copy(Chr_read,Chr);
-	int temp_line = 0;
+	temp_line = 0;
 // 	if(size ==0 ){
 // 		if (!feof(bed2bam_fh)){
 // 			if(fscanf(bed2bam_fh,"%s\t%d\t%d\n",Chr,&Coord1,&Coord2)!= 3){
@@ -249,6 +313,7 @@ int fill_buffer(char *Chr_read,char *Chr_last, int fin, int *end_chr){
 		while(Coord1 < fin && str_eq(Chr,Chr_read) && !feof(bed2bam_fh) ){
 			
 			temp_line=ftell(bed2bam_fh);
+			str_clear(Chr);
 			if(fscanf(bed2bam_fh,"%s\t%d\t%d\n",Chr,&Coord1,&Coord2)!= 3){
 				fprintf(Log,"Err : Fill buffer : problem in line %d\n",temp_line);
 				return 1;
@@ -300,6 +365,7 @@ int create_index(){
 			str_copy(Chr_read,Chr_previous);
 			Chr_ID[i]=temp;
 			i++;
+// 			printf("Echo : create_index : 1_2 : chr = \"%s\"\n",Chr_read);
 			if (i>= n_chr){
 				fprintf(Log,"Archivo : Chr_names_overload\n");
 				return 1;
@@ -307,6 +373,7 @@ int create_index(){
 		}
 	}
 	Chr_len=i;
+// 	printf("Echo : create_index : 2_0 : len = %d \n",Chr_len);
 	return 0;
 	
 }
