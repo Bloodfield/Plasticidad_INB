@@ -184,6 +184,9 @@ int copy_array(int *array_a,int *array_b,int size){
 	for(i=0;i<size; i++){
 		array_b[i]=array_a[i];
 	}
+	for(i;i<Array_Size; i++){
+		array_b[i]=0;
+	}
 	// 	printf("Echo 6 \n");
 	return 0;
 }
@@ -507,13 +510,30 @@ int Del_Overlap(int overlap_th, int score_th){
 		
 // 		printf("call connected conected_component of %d nodes \n",fin);
 		finished = conected_component(cluster,&cluster_length,current_node, score_th);
-		if(finished ==2){
+		if(finished ==2 || finished == -1){
 			
 			return 1;
 		}
 		
 		//	Purgar Clases
+// 		int db_i = 0, db_j = 0;
+// 		printf("Echo : Del_Overlap : 1_6 : Classes Before purge\n");
+// 		for (db_i = 0;db_i< Classes_size;db_i++){
+// 			printf("\t");
+// 			for (db_j = 0;db_j< Classes_sizes[db_i];db_j++){
+// 				printf("%d,",Classes[db_i][db_j]);
+// 			}
+// 			printf("\n");
+// 		}
 		int test = purge_classes(current_line);
+// 		printf("Echo : Del_Overlap : 1_6 : Classes After purge %d\n",current_line);
+// 		for (db_i = 0;db_i< Classes_size;db_i++){
+// 			printf("\t");
+// 			for (db_j = 0;db_j< Classes_sizes[db_i];db_j++){
+// 				printf("%d,",Classes[db_i][db_j]);
+// 			}
+// 			printf("\n");
+// 		}
 		if(test!=0){
 			fprintf(Log,"Err : Del Overlap : Purge class failed\n");
 			return 1;
@@ -546,35 +566,67 @@ int purge_classes( int ID){
 			Classes_sizes[i]--;
 		}
 	}
+// 	int db_i = 0, db_j = 0;
+// 	printf("Echo : purge_classes : 1_1 : Classes after remove\n");
+// 	for (db_i = 0;db_i< Classes_size;db_i++){
+// 		printf("\t");
+// 		for (db_j = 0;db_j< Classes_sizes[db_i];db_j++){
+// 			printf("%d,",Classes[db_i][db_j]);
+// 		}
+// 		printf("\n");
+// 	}
+	
 	//		Eliminar clases vacías
 	for(i=0;i<size && Classes_sizes[i]!=0;i++){}	//	Busca una linea vacía
 	if(Classes_sizes[i]==0 && i<size){
 		int offset=1;
 		//	Realiza corrimiento de datos
-		while(Classes_sizes[i+offset]==0 && i+offset<size){
-			offset++;
-		}
+// 		while(Classes_sizes[i+offset]==0 && i+offset<size-1){
+// 			offset++;
+// 		}
+// 		if(Classes_sizes[i+offset]==0 && i+offset==size-1){
+// 			offset++;
+// 		}
 		for(i;i<size-offset;i++){
-			Classes_sizes[i]=Classes_sizes[i+offset];
-			for(j=0;j<Classes_sizes[i];j++){
-				Classes[i][j]=Classes[i+offset][j];
-			}
-			for(j=0;j<Clases_adj_max;j++){
-				Classes[i][j]=0;
-			}
-			while(Classes_sizes[i+offset]==0 && i+offset< size-1){
+			offset = 1;
+			while(Classes_sizes[i+offset]==0 && i+offset < size-1){
 				offset++;
 			}
-			if(Classes_sizes[i+offset]==0 && i+offset==size-1){
+			if(Classes_sizes[i+offset]==0 && i+offset == size-1){
 				offset++;
+			}else{
+// 			if(i+offset < size && Classes_sizes[i+offset]!=0){
+// 				printf("Echo : Purge classes : 2_3 : size = %d\n",size);
+// 				printf("\ti = %d\n",i);
+// 				printf("\toffset = %d\n",offset);
+// 				printf("\tclass i size = %d\n",Classes_sizes[i]);
+// 				printf("\tClass i = [");
+// // 				int db_i=0;
+// 				for (db_i = 0; db_i < Classes_sizes[i];db_i++){
+// 					printf("%d,",Classes[i][db_i]);
+// 				}
+// 				printf("]\n");
+// 				printf("\tclass i+offset size = %d\n",Classes_sizes[i+offset]);
+// 				printf("\tClass i+offset = [");
+// // 				int db_i=0;
+// 				for (db_i = 0; db_i < Classes_sizes[i+offset]; db_i++){
+// 					printf("%d,",Classes[i+offset][db_i]);
+// 				}
+// 				printf("]\n");
+				
+				Classes_sizes[i]=Classes_sizes[i+offset];
+				Classes_sizes[i+offset] = 0;
+				copy_array(Classes[i+offset],Classes[i],Classes_sizes[i]);
+				clear_array(Classes[i+offset],Clases_adj_max);
 			}
+// 			if(Classes_sizes[i+offset]==0 && i+offset==size-1){
+// 				offset++;
+// 			}
 		}
 		
 		//	Vuelve 0 las últimas
 		for(i;i<size;i++){
-			for (j=0;j<Classes_sizes[i];j++){
-				Classes[i][j]=0;
-			}
+			clear_array(Classes[i],Clases_adj_max);
 			Classes_sizes[i]=0;
 		}
 		
@@ -592,84 +644,86 @@ int complete_data(int overlap_th, int *next_line){
 	char Dummy3[Str_len]={0};
 	char Dummy4[Str_len]={0};
 	int begin=0, end=0;
+	int temp_line=ftell(In_file);
 	if(fscanf(In_file,"%s\t%d\t%d\t%s %s %s\n",Chr_current,&begin,&end,Dummy2,Dummy3,Dummy4)!= 6){
-		fprintf(Log,"Error in next line = %d\n ",*next_line);
+		fprintf(Log,"Error in next line = %d\n ",temp_line);
 		return 2;
 	}
+	copy_Str(Chr_current,Chr_print);
 // 	fprintf(Log,"complete data : Line : %s\t%d\t%d\t%s %s %s\n",Chr_current,begin,end,Dummy2,Dummy3,Dummy4);
 	int FA0= begin;
 	int FB0= end;
-	int idx = search(Chr_current,Chr_names,Chr_len);
-	if (idx < 0){
-		fprintf(Log,"Archivo : chromosome %s not found\n",Chr_current);
-		return 2; 
-	}
-	fseek(In_file,Chr_ID[idx],SEEK_SET);
-	copy_Str(Chr_names[idx],Chr_print);
-// 	fprintf(Log,"complete data : Chr_print = %s\n",Chr_print);
-// 	fprintf(Log,"Complete Data : chr line = %ld\n",ftell(In_file));
-	
-	//	Skip FAN < FAN_min
-	int temp_line=ftell(In_file);
-	int lim_buffer = end - ((end - begin)*(100.0/overlap_th))-1;
-// 	fprintf(Log,"buffer limit = %d\n",lim_buffer);
-	begin=0;
-	while(begin < lim_buffer ){
-		temp_line = ftell(In_file);
-// 		fprintf(Log,"complete data : cicle in skip\n");
-		if(fscanf(In_file,"%s\t%d\t%d\t%s %s %s\n",Chr_current,&begin,&end,Dummy2,Dummy3,Dummy4)!= 6){
-			fprintf(Log,"%s\t%d\t%d Did not found it minimum\n ",Chr_current,begin,end);
-			return 2;
-		}
-		if(! Array_eq(Chr_current,Chr_print)){
-			fprintf(Log,"%s not complete\n",Chr_print);
-			return 2;
-		}
-	}
-	
-// 	fprintf(Log,"complete data : last line after FAN_min:\n");
-// 	fprintf(Log,"complete data : %s\t%d\t%d\t%s %s %s\n",Chr_current,begin,end,Dummy2,Dummy3,Dummy4);
+// 	int idx = search(Chr_current,Chr_names,Chr_len);
+// 	if (idx < 0){
+// 		fprintf(Log,"Archivo : chromosome %s not found\n",Chr_current);
+// 		return 2; 
+// 	}
+// 	fseek(In_file,Chr_ID[idx],SEEK_SET);
+// 	copy_Str(Chr_names[idx],Chr_print);
+// // 	fprintf(Log,"complete data : Chr_print = %s\n",Chr_print);
+// // 	fprintf(Log,"Complete Data : chr line = %ld\n",ftell(In_file));
+// 	
+// 	//	Skip FAN < FAN_min
+// 	int temp_line=ftell(In_file);
+// 	int lim_buffer = end - ((end - begin)*(100.0/overlap_th))-1;
+// // 	fprintf(Log,"buffer limit = %d\n",lim_buffer);
+// 	begin=0;
+// 	while(begin < lim_buffer ){
+// 		temp_line = ftell(In_file);
+// // 		fprintf(Log,"complete data : cicle in skip\n");
+// 		if(fscanf(In_file,"%s\t%d\t%d\t%s %s %s\n",Chr_current,&begin,&end,Dummy2,Dummy3,Dummy4)!= 6){
+// 			fprintf(Log,"%s\t%d\t%d Did not found it minimum\n ",Chr_current,begin,end);
+// 			return 2;
+// 		}
+// 		if(! Array_eq(Chr_current,Chr_print)){
+// 			fprintf(Log,"%s not complete\n",Chr_print);
+// 			return 2;
+// 		}
+// 	}
+// 	
+// // 	fprintf(Log,"complete data : last line after FAN_min:\n");
+// // 	fprintf(Log,"complete data : %s\t%d\t%d\t%s %s %s\n",Chr_current,begin,end,Dummy2,Dummy3,Dummy4);
 	fseek(In_file,temp_line,SEEK_SET);
-// 	fprintf(Log,"Complete Data : first line = %ld\n",ftell(In_file));
-	
-	//	Add FAN < FA_read
-	int Overflow = 0;
-	temp_line=-1;
-	while(temp_line<(*next_line)  && Overflow == 0){
-		Overflow=read_line(overlap_th,&begin,&temp_line,FA0,FB0);
+// // 	fprintf(Log,"Complete Data : first line = %ld\n",ftell(In_file));
+// 	
+// 	//	Add FAN < FA_read
+// 	int Overflow = 0;
+// 	temp_line=-1;
+// 	while(temp_line<(*next_line)  && Overflow == 0){
+		int Overflow=read_line(overlap_th,&begin,&temp_line,FA0,FB0);
 		if (Overflow >1){
 			fprintf(Log,"Read : Problem getting line\n");
 			return 2;
 		}
-		//	Revisa el orden
-		if((fin)>1){
-			if(flanco_A[(fin)-1] < flanco_A[(fin)-2]){
-// 				fprintf(Log,"%d\t%d\t%d\n",line_ID[(fin)-2],flanco_A[(fin)-2],flanco_B[(fin)-2]);
-// 				fprintf(Log,"%d\t%d\t%d\n",line_ID[(fin)-1],flanco_A[(fin)-1],flanco_B[(fin)-1]);
-				fprintf(Log,"Err : Complete data 2 : Unorder BED\n");
-				print_status("position not sorted",line_ID[fin-1] );
-				fclose(Log);
-				return 2;
-			}
-			if(flanco_A[(fin)-1] == flanco_A[0] && flanco_B[(fin)-1] == flanco_B[0]){
-				fprintf(Log,"Soft: Error in repetaed coords previous (%d,%d)\nSize=%d", flanco_A[0],flanco_B[0],fin);
-				fclose(Log);
-				return 2;
-			}
-		}
-	}
-	if(temp_line != (*next_line)){
-		fprintf(Log,"Err : Complete data 2-3 : Missing reference line\n");
-		print_status("next line",*next_line );
-		fprintf(Log,"temp line = %d\n",temp_line);
-		fclose(Log);
-		return 2;
-	}
+// 		//	Revisa el orden
+// 		if((fin)>1){
+// 			if(flanco_A[(fin)-1] < flanco_A[(fin)-2]){
+// // 				fprintf(Log,"%d\t%d\t%d\n",line_ID[(fin)-2],flanco_A[(fin)-2],flanco_B[(fin)-2]);
+// // 				fprintf(Log,"%d\t%d\t%d\n",line_ID[(fin)-1],flanco_A[(fin)-1],flanco_B[(fin)-1]);
+// 				fprintf(Log,"Err : Complete data 2 : Unorder BED\n");
+// 				print_status("position not sorted",line_ID[fin-1] );
+// 				fclose(Log);
+// 				return 2;
+// 			}
+// 			if(flanco_A[(fin)-1] == flanco_A[0] && flanco_B[(fin)-1] == flanco_B[0]){
+// 				fprintf(Log,"Soft: Error in repetaed coords previous (%d,%d)\nSize=%d", flanco_A[0],flanco_B[0],fin);
+// 				fclose(Log);
+// 				return 2;
+// 			}
+// 		}
+// 	}
+// 	if(temp_line != (*next_line)){
+// 		fprintf(Log,"Err : Complete data 2-3 : Missing reference line\n");
+// 		print_status("next line",*next_line );
+// 		fprintf(Log,"temp line = %d\n",temp_line);
+// 		fclose(Log);
+// 		return 2;
+// 	}
 	
 // 	fprintf(Log," %d temp == %d next\n",temp_line,*next_line);
 	//	Add FAN < FAN_max	(get next_line)
 	
-	lim_buffer = FA0 +((FB0-FA0)*(overlap_th/100.0))+1;	// +1 es por el redondeo
+	int lim_buffer = FA0 +((FB0-FA0)*(overlap_th/100.0))+1;	// +1 es por el redondeo
 	int flag = 1;
 // 	fprintf(Log,"buffer limit = %d\n",lim_buffer);
 	
@@ -884,6 +938,11 @@ int print_cluster(int *cluster, int cluster_length, int score_th){
 	}
 	if(score >= score_th){
 		printf("%s\t%d\t%d\t%d\n",Chr_print,coord_a,coord_b,score);
+		int i = 0;
+		for (i=0; i < cluster_length;i++){
+			printf("%d,",line_ID[cluster[i]]);
+		}
+		printf("\n");
 	}
 	
 	return 0;
@@ -926,7 +985,11 @@ int conected_component(int *cluster,int *cluster_length, int node ,int score_th)
 // 		printf("n candidates = %d \n",candidates_len);
 		for(i=0;i< candidates_len;i++){
 			node =candidates[i];
-			test2 += conected_component(cluster,cluster_length,node,score_th);
+			int temp = conected_component(cluster,cluster_length,node,score_th);
+			if(temp == -1){
+				return -1;
+			}
+			test2 += temp ; 
 		}
 		
 		//	Si no se puede formar uno más grande
@@ -977,6 +1040,10 @@ int in_class(int *cluster,int cluster_length){
 	for(i=0;i< Classes_size;i++){
 		
 		int test_subeq = is_subeq(cluster_ID,cluster_length,Classes[i],Classes_sizes[i]);
+		if(test_subeq==-1){
+			fprintf(Log,"Err : in_class : 2_1 : test_subeq failed\n");
+			return 1;
+		}
 		if(test_subeq){
 			//	It is a sub set of the i-th class
 			return 1;
@@ -985,13 +1052,18 @@ int in_class(int *cluster,int cluster_length){
 	
 	//	If not, then add
 	if(Classes_size>=Classes_max_size){
-		fprintf(Log,"Class overload\n");
+		fprintf(Log,"Err : in_class : 3_0 : Class overload\n");
 		return -1; 
 	}
 	copy_array(cluster_ID,Classes[Classes_size],cluster_length);
 	Classes_sizes[Classes_size]=cluster_length;
 	Classes_size++;
-	
+// 	printf("Echo : in_class : class add : [");
+// 	int db_i = 0;
+// 	for (db_i=0; db_i < Classes_sizes[Classes_size-1];db_i++ ){
+// 		printf("%d,",Classes[Classes_size-1][db_i]);
+// 	}
+// 	printf("]\n");
 	return 0;
 	
 }
@@ -1000,7 +1072,7 @@ int is_subeq(int *Arr1,int size1, int *Arr2, int size2){
 	int i=0,j=0;
 	if(size1 >= Array_Size || size2 >= Array_Size){
 		fprintf(Log,"Err is subeq in sizes \n");
-		return 1;
+		return -1;
 	}
 	while(i< size1 && j<size2){
 		if(Arr1[i]>Arr2[j]){

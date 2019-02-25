@@ -246,5 +246,3 @@ echo end
 " > $HOME/${name}_file/Alignment.sge
 
 echo Alignment.sge creado
-
-    done
