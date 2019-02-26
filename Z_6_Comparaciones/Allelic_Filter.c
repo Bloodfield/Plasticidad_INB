@@ -151,7 +151,7 @@ int print_help(){
 	fprintf(Log," \n");
 	fprintf(Log,"Ejemplo:\n");
 	fprintf(Log,"\n");
-	fprintf(Log,"$ Allelic_Filter coverarge_del.bed coverarge_left coverarge_right 0.025 \n");
+	fprintf(Log,"$ Allelic_Filter Overlap.bed bedcov.bed 0.025 \n");
 	fprintf(Log,"\n");
 	return 0;
 }
