@@ -1,12 +1,10 @@
 #	Plasticidad INB
 
-##	
-
-##	Descripción:
+##	Descripción
 
 Estas herramientas estan hechas para poder llevar a cabo los pasos de detección y filtrado de deleciones somáticas en células de humano.
 En lo particular toma los requerimientos en el laboratorio de neurodesarrollo en el [Instituto de Neurobiolgía (UNAM-Juriquilla)](http://www.inb.unam.mx/index.html)
-De igual manera contiene scripts que autimatizan gran parte del proceso, desde la descarga de datos crudos, hasta su análisis de deleciones.
+De igual manera contiene scripts que automatizan gran parte del proceso, desde la descarga de datos crudos, hasta su análisis de deleciones.
 
 ##	Consideraciones
 
@@ -14,14 +12,13 @@ La parte automática esta diseñada para ser ejecutada con el software Sun Grid 
 
 Es necesario revisar que se tienen a dispocición las siguientes dependencias:
 
-+ SRA toolkit
-+ fastx
-+ fastqc
-+ seqtk
-+ Segemehl (0.11)
-+ Samtools
++ [SRA toolkit](https://www.ncbi.nlm.nih.gov/books/NBK158899/)
++ [fastx](http://hannonlab.cshl.edu/fastx_toolkit/commandline.html)
++ [fastqc](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/)
++ [seqtk](https://github.com/lh3/seqtk)
++ [Segemehl (0.11)](https://www.bioinf.uni-leipzig.de/Software/segemehl/)
++ [Samtools](http://www.htslib.org/)
 + [Bedtools](http://bedtools.readthedocs.io/)
-+ fastc
 
 ##	Instalación
 
@@ -55,8 +52,7 @@ La ejecución instala los programas necesarios y copia los archivos *.sge automa
 + La base de datos de repetidos se tomó del proyecto [RepeatMasker](http://www.repeatmasker.org/)
 + Las referencias de los centrómeros se obtubieron de la [anotación](https://www.ncbi.nlm.nih.gov/genome/guide/human/) del genoma humano de referencia hg38
 + el archivo de longitudes de cromosomas se obtubo de los recursos de [Bedtools](http://bedtools.readthedocs.io/)
+
 ##	TODO list
 
-1. Mejorar proceso de instalación
-2. Marcar referencias de bases de datos
-3. Links de las dependencias
+

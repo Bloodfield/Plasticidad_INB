@@ -587,7 +587,7 @@ HEAD="\n#$ -cwd
 ####	Direcciones
 
 #Dirección padre de los archivos a usar (aquí debe estar el indice de segemehl)
-HOME="/mnt/Timina/mhernandez/echavez"
+HOME=$HOME
 #Habilitación de scripts personales
 PATH=\$PATH:\$HOME/bin
 
