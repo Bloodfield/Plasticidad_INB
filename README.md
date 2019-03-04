@@ -26,7 +26,7 @@ Primero hay que crear un folder $DIR/bin/ en tu carpeta de  en el cual se guarda
 La dirección DIR es la cual contendrá los datos as procesar por medio de los siguientes comandos (usando la dirección correspondiente).
 La dirección contenida en $DIR será tomada como la capteta "HOME" en los programas *.sge que se crean con la intalación, por lo que tienen que elegirse con cuidado.
 ```
-DIR="/mnt/Timina/mhernandez/echavez/"
+DIR="/mnt/Timina/grupo/usuario/"
 mkdir $DIR/bin/
 cd $DIR/bin/
 ```
@@ -49,6 +49,10 @@ Un solo clon del repositorio es capas de instalar los programas en las carpetas 
 La ejecución instala los programas necesarios y copia los archivos *.sge automatizados.
 También puedes actualizar cualquier cambio en el repositorio con los mismos comandos, solo ten en mente que no cambiará los archivos que hayas movido de directorio, y que borrará cualquier otro cambio que hayas hecho.
 
+##	Comandos
+
+##	Uso de scripts
+
 ##	Referencias
 
 + La base de datos de repetidos se tomó del proyecto [RepeatMasker](http://www.repeatmasker.org/)
@@ -57,4 +61,4 @@ También puedes actualizar cualquier cambio en el repositorio con los mismos com
 
 ##	TODO list
 
-
++ automatizar parte de asignación de descarga y curado
