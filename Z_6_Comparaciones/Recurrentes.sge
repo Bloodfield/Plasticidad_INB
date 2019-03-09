@@ -575,11 +575,11 @@ module load r/3.5.2
 
 for Chromosome in "${chr[@]}"
 do
-grep $Chromosome Deletions_Uniq.bed > temp.bed
+grep ${Chromosome} Deletions_Uniq.bed > temp.bed
 n_lines=$( wc -l temp.bed | cut -f1 -d" " )
 if [ ${n_lines} -gt 1 ]
 then
-bedtools genomecov -dz -i temp.bed -g $HOME/bin/human.hg38.genome | Rscript $HOME/bin/bed2hist.r Deletions_Uniq.bed
+bedtools genomecov -dz -i temp.bed -g $HOME/bin/human.hg38.genome | Rscript $HOME/bin/bed2hist.r Deletions_Uniq_${Chromosome}.bed
 fi
 done
 rm temp.bed

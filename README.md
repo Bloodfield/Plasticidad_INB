@@ -44,7 +44,7 @@ Al ejecutarlo, se usará la direccón en "$DIR" por lo que se instalará en la c
 También tienes que añadir el correo al cual quieres ser avisado por cada trabajo ingresado. 
 Un solo clon del repositorio es capas de instalar los programas en las carpetas necesarias.
 ```
-./Install $DIR name@host.net
+./Install.sh $DIR name@host.net
 ```
 La ejecución instala los programas necesarios y copia los archivos *.sge automatizados.
 También puedes actualizar cualquier cambio en el repositorio con los mismos comandos, solo ten en mente que no cambiará los archivos que hayas movido de directorio, y que borrará cualquier otro cambio que hayas hecho.
