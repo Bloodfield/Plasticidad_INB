@@ -16,9 +16,10 @@ int get_info(char *line, int size,char *Name, char *Chromosome, char *CIGAR, uns
 int call_GAP(FILE *output,char *CIGAR,unsigned coordenada, unsigned C_min, char *Chromosome, char *Label);
 int contained(char element,char *C_List,int size);
 	
+FILE *Log;
+
 int main(int argc, char *argv[]){
 	
-	FILE *Log;
 	Log = fopen(Log_name,"a");
 	
 	if (argc != 3){
