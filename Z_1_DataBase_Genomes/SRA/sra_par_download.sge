@@ -39,7 +39,6 @@
 #
 #   IN:
 #       name			=	nombre de acceso del SRA
-#       n_spots			=	numero de spots leidos (segun SRA)
 #       n_threads		=	numero de hilos para usar en el alineamiento
 #       quality_treshold	=	Phred mínimo para la edición de fasta
 #	bases_treshold		=	Número de bases mínimo por read
@@ -65,31 +64,29 @@
 ##---------------------------------------------------------
 #   Guía de uso
 #	1.	Obtén el genoma de referencia y construye su índice de segemehl
-#		Los datos de su ubicación los necesitarás para los siguientes pasos
-#	2.	Crea el foder que se va a usar para descargar y analizar los datos
-#		Tiene que estar en tu carpeta que llames HOME,
-#			Una alternativa es usar otra carpeta, y redefinirla en el paso que sigue
+#	2.	Crea el foder que se va a usar para descargar y analizar los datos de una corrida
+#		Tiene que estar en tu carpeta donde instalaste la paquetería
 #		El nombre del folder tiene que ser ${name}_file
 #	2.	Modifica "ZONA DE CONFIGURACIÓN" con los valores requeridos
 #	3.	Has el summit de éste sga desde el folder "${name}_file"
 #		$ qsub SRA_pipe_download.sge
 #	4.	Corre los otros scripts. Estan configurados bajo los parámetros del punto 2
+#		No olvides de corroborar los resiltados entre cada paso
 ##---------------------------------------------------------
 
+#Dirección de instalación
+HOME="/mnt/Timina/mhernandez/echavez"
 
 ########    ZONA DE CONFIGURACIÓN
 
 name="SRR822843"
-n_spots="256263009"
 n_threads="16"
 quality_treshold="20"
 bases_treshold="20"
 
-#Dirección padre de los archivos a usar (aquí debe estar el indice de segemehl)
-HOME="/mnt/Timina/mhernandez/echavez"
 #Dirección del genoma de referencia a usar
 GenomaRef="/mnt/Archives/genome/human/hg38/UCSC/Homo_sapiens/UCSC/hg38/Sequence/WholeGenomeFasta/genome.fa"
-#Dirección del Índce de segemehl
+#Dirección del Índce de segemehl (cambia si no se encuentra en HOME)
 IdxSegemehl="$HOME/Idx_Human.idx"
 #Tu correo para ser avisado
 email="echavezaparicio@gmail.com"

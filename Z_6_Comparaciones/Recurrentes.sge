@@ -24,14 +24,24 @@
 #	Importante:
 #   
 #	IN:
-#
+# 		Experimentos	= Arreglo de los nombres de las corridas o experimentos a analizar
+# 		fraction	= 
+# 
 #	OUT:
+#		
+#		{name}_view.bam		= para visualización 
+#		Deletions_Uniq.bed	= BED de las deleciones reportadas
 #
 ##---------------------------------------------------------
 
 ##---------------------------------------------------------
 #	USO
 #	
+#	1. Revisar que los archivos $HOME/${name}_file/${name}_NotAllel.bed existan
+#		por cada uno de los experimentos o corridas a analizar
+#	2. Cambiar la lista de experimentos en la zona de configuración
+#	3. Ajustar las variables de la zona de configuración a  la forma deseada
+#	4. Correr el script
 #
 ##---------------------------------------------------------
 
@@ -50,10 +60,6 @@ Experimentos=("SRR822853" "SRR733087" "SRR3325526")
 # Reciprical fraction to give a overlap
 fraction="0.5"
 
-#	SamView
-# umbral para representar datos
-th="9"
-
 #	DIRECCIONES
 
 # Dirección padre de los archivos a usar (aquí debe estar el indice de segemehl)
@@ -68,6 +74,8 @@ email="echavezaparicio@gmail.com"
 # If modules are needed, source modules environment (Do not delete the next line):
 . /etc/profile.d/modules.sh
 
+
+#	Obteniendo el bedintersect de todas las bases de datos
 module load gcc
 module load bedtools
 
@@ -92,35 +100,35 @@ do
 	#	Si se rcambia Del_Overlap, entonces puede que no sea necesario el primer cut
 	cut -f1-6 ${k}_Intersect.bed | uniq | cut -f1-5 | uniq -c  > ${k}_Freq.bed
 
-	#	después se revisa la frecuencia de intersectados
+	#	Extra		después se revisa la frecuencia de intersectados
 	cat ${k}_Freq.bed | tr -s " " | cut -d" " -f2 | sort -k1n | uniq -c > ${k}_Freq_numExp.txt
-	#	Obtinene las longitudes de cada deleción 
+	#	Extra		Obtinene las longitudes de cada deleción 
 	awk -v OFS='\t' '{print $1,$2,$3-$2,$4,$5}' ${k}_Freq.bed > ${k}_Len.bed
 
-	#	Se obtienen las frecuencias de longitudes
+	#	Extra		Se obtienen las frecuencias de longitudes
 	cut -f3  ${k}_Len.bed | sort -n | uniq -c > ${k}_Len_Freq.txt
 done
 
 #	Obtiene todas las deleciones presentes en al menos 2 experimentos
 cat *_Freq.bed | tr -s " " | cut -d" " -f3- | sort -k1,1 -k1.4n -k2,3n | uniq > Deletions_Uniq.bed
 
-#	Obtiene las longitudes
+#	Extra		Obtiene las longitudes
 awk -v OFS='\t' '{print $1,$2,$3-$2,$4,$5}' Deletions_Uniq.bed > Deletions_Uniq_Len.bed
 
-#	Se obtienen las frecuencias de longitudes
+#	Extra		Se obtienen las frecuencias de longitudes
 cut -f3  Deletions_Uniq_Len.bed | sort -n | uniq -c > Deletions_Uniq_Len_Freq.txt
 
-#	Se obtienen las deleciones que superen el umbral de muestra	# tem 9, pero hay que automatizar 
-# awk -v OFS='\t' -v th="${th}" '{if ($3-$2 >= th) print $1,$2,$3}' Deletions_Uniq.bed  > Deletions_View.bed
-#	Obtiene las deleciones junto con el rango de los flancos a 20 nt
+#	Para visualización
+
+#		Obtiene las deleciones junto con el rango de los flancos a 20 nt
 awk -v OFS='\t' '{print $1,$2-20,$3+20}' Deletions_Uniq.bed  > Deletions_ViewAndFlanc.bed
 
-#	Onteniendo bam de regiones implicadas
+#		Onteniendo bed compacto de regiones implicadas
 bedtools merge -i Deletions_ViewAndFlanc.bed > Deletions_ViewAndFlanc_merge.bed
 rm Deletions_ViewAndFlanc.bed
 mv Deletions_ViewAndFlanc_merge.bed Deletions_ViewAndFlanc.bed
 
-#	Obteniendo bam reducido sobre las delciones
+#		Obteniendo bam reducido sobre las delciones para visualización
 
 module load htslib/1.2.1
 module load samtools

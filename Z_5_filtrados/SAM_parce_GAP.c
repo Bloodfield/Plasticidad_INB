@@ -9,7 +9,7 @@
 #include <string.h>
 
 #define Log_name "Log.txt"
-
+#define INPUT_SIZE 4000
 int clear_char(char *string, int size);
 int get_line(char *string,int *size);
 int get_info(char *line, int size,char *Name, char *Chromosome, char *CIGAR, unsigned *inicio );
@@ -18,12 +18,8 @@ int contained(char element,char *C_List,int size);
 	
 int main(int argc, char *argv[]){
 	
-	//	Configurations and messages
-	
 	FILE *Log;
 	Log = fopen(Log_name,"a");
-	char Base_name[300]={0};
-	unsigned int n_flanco = 10;
 	
 	if (argc != 3){
 		fprintf(Log,"Se tiene que escribir:\n");
@@ -43,13 +39,17 @@ int main(int argc, char *argv[]){
 		return 1;
 	}
 	
+	//	Obtiene argumentos
+	
+	char Base_name[300]={0};
+	unsigned int n_flanco = 10;
 	fprintf(Log,"Name : %s \n",argv[1]);
 	strcpy(Base_name,argv[1]);
 	sscanf (argv[2],"%u",&n_flanco);
 	
 	//	PARCEO de GAPS
 	
-	char input[4000]={0};
+	char input[INPUT_SIZE]={0};
 	int size = 0;
 	while (get_line(input,&size)!= EOF){
 // 		printf("%s\n",input);
@@ -75,9 +75,7 @@ int main(int argc, char *argv[]){
 			output = fopen(out_name,"a");
 			
 			//	Parceo de CIGAR
-// 			printf("CIGAR = %s\n",CIGAR);
 			call_GAP(output,CIGAR,inicio,n_flanco, Chromosome, Label);
-			
 			
 			fclose(output);
 			
@@ -93,19 +91,17 @@ int main(int argc, char *argv[]){
 	return 0;
 }
 
-int clear_char(char *string, int size){
-	int i=0;
-	for(i=0; i< size; i++){
-		string[i]=0;
-	}
-	return 0;
-}
 
+//	Obtiene una linea de stdin
 int get_line(char *string,int *size){
 	*size = 0;
 	char c;
 	c = getchar();
 	while (c  != '\n' && c != EOF){
+		if (*size >= INPUT_SIZE){
+			fprintf(Log,"Error : get_line : 0 : To long line %s\n",string);
+			
+		}
 		string[*size]=c;
 		(*size)++;
 		c = getchar();
@@ -114,6 +110,7 @@ int get_line(char *string,int *size){
 	return c;
 }
 
+//	Maquina de estados para la lectura de la línea
 int get_info(char *line, int size,char *Name, char *Chromosome, char *CIGAR, unsigned *inicio ){
 	char state = 'A';
 	char c;
@@ -138,33 +135,26 @@ int get_info(char *line, int size,char *Name, char *Chromosome, char *CIGAR, uns
 				}
 				break;
 			case 'C':
-// 				printf("%c",c);
 				if(c!='\t'){
 					Name[input_i]=c;
 					input_i++;
 				}else{
 					input_i=0;
 					state = 'D';
-// 					printf("%s\n",Name);
-// 					clear_char(Name,200);
 				}
 				break;
 			case 'D':
-				// 				printf("%c",c);
 				if(c=='\t'){
 					state = 'E';
 				}
 				break;
 			case 'E':
-				// 				printf("%c",c);
 				if(c!='\t'){
 					Chromosome[input_i]=c;
 					input_i++;
 				}else{
 					input_i=0;
 					state = 'F';
-// 					printf("%s\n",Chromosome);
-// 					clear_char(Chromosome,200);
 				}
 				break;
 			case 'F':
@@ -172,26 +162,21 @@ int get_info(char *line, int size,char *Name, char *Chromosome, char *CIGAR, uns
 					(*inicio)=((*inicio)*10)+c-'0';
 				}else{
 					state = 'G';
-// 					printf("%u\n",*inicio);
 				}
 				break;
 			case 'G':
-				// 				printf("%c",c);
 				if(c=='\t'){
 					state = 'H';
 				}
 				break;
 				
 			case 'H':
-				// 				printf("%c",c);
 				if(c!='\t'){
 					CIGAR[input_i]=c;
 					input_i++;
 				}else{
 					input_i=0;
 					state = 'B';
-// 					printf("%s\n",CIGAR);
-// 					clear_char(CIGAR,200);
 				}
 				break;
 				
@@ -200,9 +185,8 @@ int get_info(char *line, int size,char *Name, char *Chromosome, char *CIGAR, uns
 	return 0;
 }
 
+//	Maquina de estados para el CIGAR
 int call_GAP(FILE *output,char *CIGAR,unsigned coordenada, unsigned C_min,  char *Chromosome, char *Label){
-	
-// 	fprintf(output,"HelloooooOOooOOOOOoo\n");
 	
 	//	Variables principales
 	
@@ -240,7 +224,6 @@ int call_GAP(FILE *output,char *CIGAR,unsigned coordenada, unsigned C_min,  char
 	
 	//	Maquina de estados
 	
-// 	printf("C2 inicial = %u\n",C2);
 	
 	char	state	= 'A';
 	i=0;
@@ -296,10 +279,9 @@ int call_GAP(FILE *output,char *CIGAR,unsigned coordenada, unsigned C_min,  char
 					temp = 0;
 				}else if(contained(c,G_List,3)){
 					
-// 					printf("C1 = %u, C2 = %u, Gap = %u\n",C1,C2,G);
 					//	Test -> print
 					
-					if(C1 >= C_min && C2 >= C_min && G > 0){//if(C1 >= C_min && C2 >= C_min && G >= G_min && G <= G_max){
+					if(C1 >= C_min && C2 >= C_min && G > 0){
 						inicio	= coordenada + C1;
 						fin	= inicio + G;
 						fprintf(output, "%s\t%u\t%u\t%s\n",Chromosome,inicio,fin,Label);
@@ -318,16 +300,15 @@ int call_GAP(FILE *output,char *CIGAR,unsigned coordenada, unsigned C_min,  char
 				break;
 		
 		//	FSM Err
-			default: printf("Error in CIGAR \n");
+			default: fprintf(Log,"Error in CIGAR %s\n",CIGAR);
 			}
 		}
 		i++;
 	}
 	
 	//	Ultimo paso
-// 	printf("C1 = %u, C2 = %u, Gap = %u\n",C1,C2,G);
 	//	Test -> print
-	if(C1 >= C_min && C2 >= C_min && G > 0){//if(C1 >= C_min && C2 >= C_min && G >= G_min && G <= G_max){
+	if(C1 >= C_min && C2 >= C_min && G > 0){
 		inicio	= coordenada + C1;
 		fin	= inicio + G;
 		fprintf(output, "%s\t%u\t%u\t%s\n",Chromosome,inicio,fin,Label);
@@ -336,11 +317,21 @@ int call_GAP(FILE *output,char *CIGAR,unsigned coordenada, unsigned C_min,  char
 	return 0;
 }
 
+//	Revisa se el caracter "element" se encuentra en C_List
 int contained(char element,char *C_List,int size){
 	int i = 0;
 	for (i =0; i<size; i++){
 		if (element == C_List[i])
 			return 1;
+	}
+	return 0;
+}
+
+//	Limpia string
+int clear_char(char *string, int size){
+	int i=0;
+	for(i=0; i< size; i++){
+		string[i]=0;
 	}
 	return 0;
 }

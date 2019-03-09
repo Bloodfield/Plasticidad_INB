@@ -30,14 +30,12 @@
 #		depth			= Profundidad mínima de deleciones para considerar deleciones
 #		habilita_sge		= Bandera para permitir la escritura de los sge
 #						Poner en "False" si ya existen en la carpeta superior
-#		max_bloque		= Cantidad de lineas de RM para separar los archivos sge
-#						Los sge se separan en base de que tanta memoria ocupan los archivos rmsk_*.bin
-#						Para determinarlo, usa el orden dado en "chr" y la longitud de cada *.bin
-#						max_bloque asegura que no se pase una cantidad máxima de lineas de *bin por sge
+#
+#		${name}_sorted.bam	= Archivo de alineamiento BAM Ordenado e indexado
 #
 #	OUT:
 #		${name}_${Chromosome}_splitreads.bed		= Archivo de split reads por cromosoma
-#		RMFilter_${name}_${count}.sge			= sge que realiza el filtrado con Repeat Masker
+#		RMFilter_${name}.sge				= sge que realiza el filtrado con Repeat Masker
 #									También hace el análisis del perfil de deleciones
 #
 ##---------------------------------------------------------
@@ -45,14 +43,12 @@
 ##---------------------------------------------------------
 #	USO
 #	
-#	1.	Crear los programas y Archivos de Repeat Masker "rmsk_files.sge"
-#	2.	Copiar el programa "SAM_parce_GAP.pl" a tu carpeta bin (puedes definirla en el siguiente paso)
-#	3.	Configurar la ZONA de CONFIGURACIÓN en las líneas de abajo a tus necesidades
-#	4.	Asegurate de haber corrido correctamente "SRA_pipe_download.sge"
-#	5.	Asegurarte de tener los {name}.bam en el mismo folder que el script
-#	6.	Correr este archivo
+#	1.	Configurar la ZONA de CONFIGURACIÓN en las líneas de abajo a tus necesidades
+#	2.	Asegurarte de tener los {name}.bam en el mismo folder que el script
+#	3.	Correr este archivo
 #		$ qsub Filter.sge
-#	7.	Si los mandaste a crear, corre los otros scripts. Estan configurados bajo los parámetros del punto 3
+#	4.	Si activaste la bandera" habilita_sge", corre el siguiente scripts.
+#		Estos están configurados bajo los parámetros del punto 3
 #
 ##---------------------------------------------------------
 
@@ -70,28 +66,26 @@
 qbases="300"
 #	porcentaje de sobrelape para repeat masker
 percentage="20"
-#	Archivos a analizar, sin extención
+#	Raiz de los archivos a analizar, sin extención
 name="SRR3290534"
-#	Habilita la creación de SGE's en caso de que ya existan
-habilita_sge=true
-#	Tamaño máximo de bloque para crear sge
-max_bloque="450000"
+#	Habilita la creación de SGE's en caso de que ya existan (1 = habilitado, 0=deshabilitado)
+habilita_sge=1
 
-#	MARIBELTOOLS
 #	Mínimo de frecuencia en las deleciones para reportar recurrentes
 score_min="2"
 #	Porcentage mínimo de sobrelape para considerar recurrencia
 overlap_percentaje="50"
 ####	Direcciones
 
-#Dirección padre de los archivos a usar (aquí debe estar el indice de segemehl)
-HOME="/mnt/Timina/mhernandez/echavez"
-#Habilitación de scripts personales
-PATH=$PATH:$HOME/bin
 #Tu correo para ser avisado
 email="echavezaparicio@gmail.com"
 
 ########	ZONA DE SCRIPT
+
+#Dirección padre de los archivos a usar
+HOME="/mnt/Timina/mhernandez/echavez"
+#Habilitación de scripts personales
+PATH=$PATH:$HOME/bin
 
 chr=(
 chr1
@@ -562,14 +556,16 @@ HEAD="\n#$ -cwd
 #	DESCRIPCIÓN
 #   
 #	Este programa revisa los bloques de los perfiles de sobrelapamieto de deleciones
+#	También lleva a cabo los filtros en base a la proporción de alelos y de zonas reperidas
 #   
 #	Importante:
 #   
 #	IN:
-#		Variable		= Explicación
+#		${name}_\${Chromosome}_splitreads.bed		= Los archivos BED de deleciones detectadas
+#		${name}_sorted.bam	= Archivo de alineamiento BAM Ordenado e indexado
 #
 #	OUT:
-#		Variable		= Explicación
+#		${name}_NotAllel.bed		= Archivo que contiene las deleciones filtradas del experimento
 
 ##---------------------------------------------------------
 
@@ -580,8 +576,6 @@ HEAD="\n#$ -cwd
 
 
 ########	ZONA DE CONFIGURACIÓN
-
-####	Variables de entrada
 
 
 ####	Direcciones
@@ -621,35 +615,39 @@ egrep ";B;" ${name}.sngl.bed > ${name}_B.sngl.bed
 # echo search B
 # search_bed_sam.pl ${name}_B.sngl.bed ${name}.sam > ${name}_B.fastq.sngl.sam # bed sam B
 
-if $habilita_sge
-	then
+if [ $habilita_sge -eq 0 ]
+then
+exit 0
+fi
 
-	printf "#!/bin/bash\n#$ -S /bin/bash\n#$ -N RM_${name}\n$HEAD\n" > RMFilter_${name}.sge
-	
-	#	Filtros de RMasker
-	for Chromosome in "${chr[@]}"
-		do
-		Chr_lines=$(grep -r  "rmsk_${Chromosome}.txt" $HOME/rmsk/files_lines.txt | tr -s " " | cut -f2 -d" ")
-		
-		printf "
+
+printf "#!/bin/bash\n#$ -S /bin/bash\n#$ -N RM_${name}\n$HEAD\n" > RMFilter_${name}.sge
+
+#	Filtros de RMasker y Del Overlap
+for Chromosome in "${chr[@]}"
+do
 
 if [ -f ${name}_${Chromosome}_splitreads.bed ]
 then
+Chr_lines=$(grep -r  "rmsk_${Chromosome}.txt" $HOME/rmsk/files_lines.txt | tr -s " " | cut -f2 -d" ")
+printf "
+
 cat ${name}_${Chromosome}_splitreads.bed | \
 RMFilter $HOME/rmsk/rmsk_${Chromosome}.bin ${Chr_lines} ${qbases} ${percentage} | \
 sort -n -k2,3 > ${name}_splitreads_RM_sorted_temp.bed
 n_lines=\$( wc -l ${name}_splitreads_RM_sorted_temp.bed | cut -f1 -d\" \" )
-	if [ \${n_lines} -gt 1 ]
-	then
-	Del_Overlap ${name}_splitreads_RM_sorted_temp.bed ${score_min} ${overlap_percentaje} | sort -k2,3n | uniq >> ${name}_splitreads_Overlap.bed
-	fi
+if [ \${n_lines} -gt 1 ]
+then
+Del_Overlap ${name}_splitreads_RM_sorted_temp.bed ${score_min} ${overlap_percentaje} | sort -k2,3n | uniq >> ${name}_splitreads_Overlap.bed
 fi
 
 " >> RMFilter_${name}.sge
-		done
-	
-	#	Filtro de Overlap y  Alelos
-	printf "
+fi
+
+done
+
+#	Filtro de Alelos
+printf "
 echo Del_Overlap done
 
 cut -f1-3 ${name}_splitreads_Overlap.bed > ${name}_splitreads_2bam.bed
@@ -657,7 +655,7 @@ awk -v OFS='\\\t' '{print \$1,\$2-20,\$2}' ${name}_splitreads_Overlap.bed >> ${n
 awk -v OFS='\\\t' '{print \$1,\$3,\$3+20}' ${name}_splitreads_Overlap.bed >> ${name}_splitreads_2bam.bed
 echo 2bam
 
- sort -k1,1 -k2,2n ${name}_splitreads_2bam.bed | uniq > ${name}_splitreads_2bam_sort.bed
+sort -k1,1 -k2,2n ${name}_splitreads_2bam.bed | uniq > ${name}_splitreads_2bam_sort.bed
 echo 2bam_sorted
 
 bedtools genomecov -split -bg -ibam ${name}_sorted.bam \
@@ -668,5 +666,4 @@ echo coverages obtained
 Allelic_Filter ${name}_splitreads_Overlap.bed ${name}_splitreads_bedcov.bed 0.025 | sort -k1,1 -k2,2n > ${name}_NotAllel.bed
 echo Allelic_Filter Done
 
-	" >> RMFilter_${name}.sge
-	fi
+" >> RMFilter_${name}.sge

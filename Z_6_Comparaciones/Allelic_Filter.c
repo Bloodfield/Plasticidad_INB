@@ -70,10 +70,8 @@ int main(int argc, char *argv[]){
 	fprintf(Log,"Name_Overlap : %s \n",argv[1]);
 	fprintf(Log,"Name_bedcov : %s \n",argv[2]);
 	fprintf(Log,"Threshold : %f \n",atof(argv[3]));
-// 	fprintf(Log,"Threshold : %f \n",argv[3]);
 	Overlap=argv[1];
 	bedcov=argv[2];
-// 	sscanf(argv[3],"%f",&th);
 	th=atof(argv[3]);
 	fprintf(Log,"Threshold : %f \n",th);
 	
@@ -132,6 +130,10 @@ int main(int argc, char *argv[]){
 	return 0;
 }
 
+//	FUNCIONES
+
+//		Sistema
+
 int print_help(){
 
 	fprintf(Log,"Error. Mostrando ayuda: \n");
@@ -155,6 +157,8 @@ int print_help(){
 	fprintf(Log,"\n");
 	return 0;
 }
+
+//	Algoritmo
 
 int index_bedcov(){
 	int i=0;
@@ -244,12 +248,7 @@ int read_bedcov(  int *flanco_A, int *flanco_B, int *cuenta, int *table_len, cha
 	return 0;
 }
 
-int copy_Array(char *Str1,char *Str2){
-	int i=0;
-	for(i=0; i< Str_len;i++){
-		Str2[i]=Str1[i];
-	}
-}
+
 
 int Filter(float th){
 	
@@ -339,6 +338,15 @@ int get_cover(int inicio,int fin, int *flanco_A, int *flanco_B, int *cuenta, int
 	
 	//	regresa el valor de la cuenta
 	return cuenta[idx];
+}
+
+//		Arrays
+
+int copy_Array(char *Str1,char *Str2){
+	int i=0;
+	for(i=0; i< Str_len;i++){
+		Str2[i]=Str1[i];
+	}
 }
 
 int search(char *Str,char Array[][Str_len],int Array_len){
