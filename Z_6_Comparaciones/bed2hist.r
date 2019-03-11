@@ -32,7 +32,7 @@ chr_list = unique(chr_list);
 #	nombre y guardado de imagenes
 image_name = sub('\\..*$', '', name);
 image_name = paste(image_name,".ps",sep="");
-postscript(image_name, width = img_width, height = img_height);
+pdf(image_name, width = img_width, height = img_height);
 
 for (Chromosome in chr_list){
 	

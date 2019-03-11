@@ -567,6 +567,11 @@ do
 	cut -f3  ${k}_Len.bed | sort -n | uniq -c > ${k}_Len_Freq.txt
 done
 
+#	Obtneer aquellas que se encuentren en los 3 experimentos
+n_req=$((${#Experimentos[@]}-1))
+cat *_Freq.bed | tr -s " " \
+	| awk -v OFS='\t' -v n="${n_req}"  '{if($1 == n) print $2,$3,$4}' \
+	| sort -k1,1 -k2,2n | uniq > Deletions_Uniq_Recurrent.bed
 #	Obtiene todas las deleciones presentes en al menos 2 experimentos
 cat *_Freq.bed | tr -s " " | cut -d" " -f3- | sort -k1,1 -k1.4n -k2,3n | uniq > Deletions_Uniq.bed
 
@@ -575,7 +580,7 @@ module load r/3.5.2
 
 for Chromosome in "${chr[@]}"
 do
-grep ${Chromosome} Deletions_Uniq.bed > temp.bed
+grep -P "^${Chromosome}\t" Deletions_Uniq.bed > temp.bed
 n_lines=$( wc -l temp.bed | cut -f1 -d" " )
 if [ ${n_lines} -gt 1 ]
 then
