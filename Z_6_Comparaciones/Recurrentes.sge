@@ -555,8 +555,7 @@ do
 		-f ${fraction} -r > ${k}_Intersect.bed
 	
 	#	revisa cuantos experimentos avalan las deleciones en ${i}_${k}_Intersect.bed
-	#	Si se rcambia Del_Overlap, entonces puede que no sea necesario el primer cut
-	cut -f1-6 ${k}_Intersect.bed | uniq | cut -f1-5 | uniq -c  > ${k}_Freq.bed
+	cut -f1-6 ${k}_Intersect.bed | uniq | cut -f1-5 | uniq -c | awk -v OFS='\t' '{print $1,$2-1,$3-1}' > ${k}_Freq.bed
 
 	#	Extra		después se revisa la frecuencia de intersectados
 	cat ${k}_Freq.bed | tr -s " " | cut -d" " -f2 | sort -k1n | uniq -c > ${k}_Freq_numExp.txt
@@ -616,3 +615,28 @@ do
 	samtools index ${k}_view.bam
 	
 done
+
+#	Intersección con la base de datos de cáncer
+bedtools intersect -a Deletions_Uniq_Recurrent.bed -b $HOME/bin/genes_gdc_small_ucsc.bed -u -sorted > Intersect_Recurrent_Cancer.bed
+bedtools intersect -a Deletions_Uniq.bed -b $HOME/bin/genes_gdc_small_ucsc.bed -u -sorted > Intersect_Cancer.bed
+
+for Chromosome in "${chr[@]}"
+do
+grep -P "^${Chromosome}\t" Intersect_Cancer.bed > temp.bed
+n_lines=$( wc -l temp.bed | cut -f1 -d" " )
+if [ ${n_lines} -gt 1 ]
+then
+bedtools genomecov -dz -i temp.bed -g $HOME/bin/human.hg38.genome | Rscript $HOME/bin/bed2hist.r Intersect_Cancer_${Chromosome}.bed
+fi
+done
+
+for Chromosome in "${chr[@]}"
+do
+grep -P "^${Chromosome}\t" Intersect_Recurrent_Cancer.bed > temp.bed
+n_lines=$( wc -l temp.bed | cut -f1 -d" " )
+if [ ${n_lines} -gt 1 ]
+then
+bedtools genomecov -dz -i temp.bed -g $HOME/bin/human.hg38.genome | Rscript $HOME/bin/bed2hist.r Intersect_Recurrent_Cancer_${Chromosome}.bed
+fi
+done
+rm temp.bed
