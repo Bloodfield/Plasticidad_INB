@@ -620,15 +620,15 @@ done
 bedtools intersect -a Deletions_Uniq_Recurrent.bed -b $HOME/bin/genes_gdc_small_ucsc.bed -u -sorted > Intersect_Recurrent_Cancer.bed
 bedtools intersect -a Deletions_Uniq.bed -b $HOME/bin/genes_gdc_small_ucsc.bed -u -sorted > Intersect_Cancer.bed
 
-for Chromosome in "${chr[@]}"
-do
-grep -P "^${Chromosome}\t" Intersect_Cancer.bed > temp.bed
-n_lines=$( wc -l temp.bed | cut -f1 -d" " )
-if [ ${n_lines} -gt 1 ]
-then
-bedtools genomecov -dz -i temp.bed -g $HOME/bin/human.hg38.genome | Rscript $HOME/bin/bed2hist.r Intersect_Cancer_${Chromosome}.bed
-fi
-done
+# for Chromosome in "${chr[@]}"
+# do
+# grep -P "^${Chromosome}\t" Intersect_Cancer.bed > temp.bed
+# n_lines=$( wc -l temp.bed | cut -f1 -d" " )
+# if [ ${n_lines} -gt 1 ]
+# then
+# bedtools genomecov -dz -i temp.bed -g $HOME/bin/human.hg38.genome | Rscript $HOME/bin/bed2hist.r Intersect_Cancer_${Chromosome}.bed
+# fi
+# done
 
 for Chromosome in "${chr[@]}"
 do
