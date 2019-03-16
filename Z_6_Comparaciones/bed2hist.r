@@ -36,9 +36,28 @@ pdf(image_name, width = img_width, height = img_height);
 
 for (Chromosome in chr_list){
 	
+	#	Make compact data
+	temp_chr_table_x = bed_table[bed_table[,1]==Chromosome,2];
+	temp_chr_table_y = bed_table[bed_table[,1]==Chromosome,3];
+	chr_table_x = c();
+	chr_table_y = c();
+	step = temp_chr_table_x[length(temp_chr_table_x)] / img_width;
+	for (i in 1:(img_width-1)) {
+		chr_table_x = c(chr_table_x,(i-0.5)*step);
+		segment = temp_chr_table_x >= (i-1)*step && temp_chr_table_x < i*step;
+		segment = max(temp_chr_table_y[segment]);
+		chr_table_y = c(chr_table_y,segment);
+	}
+	chr_table_x = c(chr_table_x,(img_width-0.5)*step);
+	segment = temp_chr_table_x >= (img_width-1)*step && temp_chr_table_x <= img_width*step;
+	segment = max(temp_chr_table_y[segment]);
+	chr_table_y = c(chr_table_y,segment);
+	
+	
 	#	Get Histogram values
-	chr_table_x = bed_table[bed_table[,1]==Chromosome,2];
-	chr_table_y = bed_table[bed_table[,1]==Chromosome,3];
+# 	chr_table_x = bed_table[bed_table[,1]==Chromosome,2];
+# 	chr_table_y = bed_table[bed_table[,1]==Chromosome,3];
+	
 	
 	#	Get Chromosome divitions
 	
