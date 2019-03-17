@@ -17,13 +17,14 @@ bed_table = read.table("stdin");
 
 centromere_coords=paste(path.expand("~"),"/bin/centromere_coords.bed",sep="")
 centromere_table = read.table(centromere_coords);
+# centromere_table = read.table("/home/bloodfield/W_Root/1_Scy/Biología_Computer_Bioinformática/Plasticidad/Z_6_Comparaciones/centromere_coords.bed");
 row.names(centromere_table) <- centromere_table[,1];
 centromere_table <- centromere_table[,2-3]
 
 Chr_end = paste(path.expand("~"),"/bin/human.hg38.genome",sep="")
 Chr_end_table = read.table(Chr_end);
+# Chr_end_table = read.table("/home/bloodfield/W_Root/1_Scy/Biología_Computer_Bioinformática/Plasticidad/Z_6_Comparaciones/human.hg38.genome");
 row.names(Chr_end_table) <- Chr_end_table[,1]
-# Chr_end_table <- Chr_end_table[,2]
 
 #	For every Chromosome
 chr_list = bed_table[,1];
@@ -32,8 +33,8 @@ chr_list = unique(chr_list);
 #	nombre y guardado de imagenes
 image_name = sub('\\..*$', '', name);
 image_name = paste(image_name,".pdf",sep="");
-pdf(image_name, width = img_width, height = img_height);
-
+# pdf(image_name, width = img_width, height = img_height);
+pdf(image_name);
 for (Chromosome in chr_list){
 	
 	#	Make compact data
@@ -44,19 +45,20 @@ for (Chromosome in chr_list){
 	step = temp_chr_table_x[length(temp_chr_table_x)] / img_width;
 	for (i in 1:(img_width-1)) {
 		chr_table_x = c(chr_table_x,(i-0.5)*step);
-		segment = temp_chr_table_x >= (i-1)*step && temp_chr_table_x < i*step;
-		segment = max(temp_chr_table_y[segment]);
-		chr_table_y = c(chr_table_y,segment);
+		segment_interval = (temp_chr_table_x >= (i-1)*step & temp_chr_table_x < i*step);
+		segment = temp_chr_table_y[segment_interval];
+		segment_data = 0
+		if(length(segment)>0){
+			print(temp_chr_table_y[segment_interval])
+			segment_data = max(segment);
+		}
+		chr_table_y = c(chr_table_y,segment_data);
 	}
 	chr_table_x = c(chr_table_x,(img_width-0.5)*step);
 	segment = temp_chr_table_x >= (img_width-1)*step && temp_chr_table_x <= img_width*step;
 	segment = max(temp_chr_table_y[segment]);
 	chr_table_y = c(chr_table_y,segment);
 	
-	
-	#	Get Histogram values
-# 	chr_table_x = bed_table[bed_table[,1]==Chromosome,2];
-# 	chr_table_y = bed_table[bed_table[,1]==Chromosome,3];
 	
 	
 	#	Get Chromosome divitions
@@ -73,8 +75,8 @@ for (Chromosome in chr_list){
 		xlab="Coordenada", 
 		ylab="Cobertura",
 		xlim=c(0, Chr_end_table[Chromosome,2]), 
-		ylim=c(0, height));
-# 		axes=FALSE);
+		ylim=c(0, height),
+		axes=TRUE);
 # 	axis(side=1,pos=Chr_end_table[Chromosome,2])
 # 	axis(side=2,pos=height)
 	
@@ -102,3 +104,4 @@ for (Chromosome in chr_list){
 	}
 }
 dev.off();
+warnings()
