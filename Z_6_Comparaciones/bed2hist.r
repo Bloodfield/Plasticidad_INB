@@ -9,7 +9,7 @@ name=args[1];
 
 #	Variables
 
-img_width=700;
+img_width=1400;
 img_height=350;
 
 #	Read Files
@@ -49,15 +49,21 @@ for (Chromosome in chr_list){
 		segment = temp_chr_table_y[segment_interval];
 		segment_data = 0
 		if(length(segment)>0){
-			print(temp_chr_table_y[segment_interval])
+# 			print(temp_chr_table_y[segment_interval])
 			segment_data = max(segment);
 		}
 		chr_table_y = c(chr_table_y,segment_data);
 	}
 	chr_table_x = c(chr_table_x,(img_width-0.5)*step);
-	segment = temp_chr_table_x >= (img_width-1)*step && temp_chr_table_x <= img_width*step;
-	segment = max(temp_chr_table_y[segment]);
-	chr_table_y = c(chr_table_y,segment);
+	print((img_width-0.5)*step)
+	segment_interval = (temp_chr_table_x >= (img_width-1)*step & temp_chr_table_x <= img_width*step);
+	segment = temp_chr_table_y[segment_interval];
+	segment_data = 0
+	if(length(segment)>0){
+# 			print(temp_chr_table_y[segment_interval])
+		segment_data = max(segment);
+	}
+	chr_table_y = c(chr_table_y,segment_data);
 	
 	
 	
