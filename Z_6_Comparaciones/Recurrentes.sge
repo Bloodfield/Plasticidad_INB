@@ -566,8 +566,8 @@ do
 	cut -f3  ${k}_Len.bed | sort -n | uniq -c > ${k}_Len_Freq.txt
 done
 
-#	Obtneer aquellas que se encuentren en los 3 experimentos
-n_req=$((${#Experimentos[@]}-1))
+#	Obtneer aquellas que se encuentren en los todos experimentos
+n_req=$((${#Experimentos[@]}))
 cat *_Freq.bed | tr -s " " \
 	| awk -v OFS='\t' -v n="${n_req}"  '{if($1 == n) print $2,$3,$4}' \
 	| sort -k1,1 -k2,2n | uniq > Deletions_Uniq_Recurrent.bed
@@ -596,8 +596,8 @@ cut -f3  Deletions_Uniq_Len.bed | sort -n | uniq -c > Deletions_Uniq_Len_Freq.tx
 
 #	Para visualización
 
-#		Obtiene las deleciones junto con el rango de los flancos a 20 nt
-awk -v OFS='\t' '{print $1,$2-20,$3+20}' Deletions_Uniq_Recurrent.bed  > Deletions_ViewAndFlanc.bed
+#		Obtiene las deleciones junto con el rango de los flancos a 20 nt para deleciones menores a 1Mbases
+awk -v OFS='\t' '{if ($3 -$2 < 1000000) print $1,$2-20,$3+20}' Deletions_Uniq_Recurrent.bed  > Deletions_ViewAndFlanc.bed
 
 #		Onteniendo bed compacto de regiones implicadas
 bedtools merge -i Deletions_ViewAndFlanc.bed > Deletions_ViewAndFlanc_merge.bed
@@ -618,7 +618,7 @@ done
 
 #	Intersección con la base de datos de cáncer
 bedtools intersect -a Deletions_Uniq_Recurrent.bed -b $HOME/bin/genes_gdc_small_ucsc.bed -u -sorted > Intersect_Recurrent_Cancer.bed
-bedtools intersect -a Deletions_Uniq.bed -b $HOME/bin/genes_gdc_small_ucsc.bed -u -sorted > Intersect_Cancer.bed
+# bedtools intersect -a Deletions_Uniq.bed -b $HOME/bin/genes_gdc_small_ucsc.bed -u -sorted > Intersect_Cancer.bed
 
 # for Chromosome in "${chr[@]}"
 # do

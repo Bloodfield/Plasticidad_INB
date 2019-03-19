@@ -9,7 +9,7 @@ name=args[1];
 
 #	Variables
 
-img_width=1400;
+img_width=5000;
 img_height=350;
 
 #	Read Files
@@ -41,29 +41,43 @@ for (Chromosome in chr_list){
 	temp_chr_table_x = bed_table[bed_table[,1]==Chromosome,2];
 	temp_chr_table_y = bed_table[bed_table[,1]==Chromosome,3];
 	chr_table_x = c();
-	chr_table_y = c();
+	chr_table_y_max = c();
+	chr_table_y_av = c();
+	chr_table_y_min = c();
 	step = temp_chr_table_x[length(temp_chr_table_x)] / img_width;
 	for (i in 1:(img_width-1)) {
 		chr_table_x = c(chr_table_x,(i-0.5)*step);
 		segment_interval = (temp_chr_table_x >= (i-1)*step & temp_chr_table_x < i*step);
 		segment = temp_chr_table_y[segment_interval];
-		segment_data = 0
+		segment_data_av = 0
+		segment_data_min = 0
+		segment_data_max = 0
 		if(length(segment)>0){
 # 			print(temp_chr_table_y[segment_interval])
-			segment_data = max(segment);
+			segment_data_av = mean(segment);
+			segment_data_max = max(segment);
+			segment_data_min = mim(segment);
 		}
-		chr_table_y = c(chr_table_y,segment_data);
+		chr_table_y_avr = c(chr_table_y_avr,segment_data_avr);
+		chr_table_y_max = c(chr_table_y_max,segment_data_max);
+		chr_table_y_min = c(chr_table_y_min,segment_data_min);
 	}
-	chr_table_x = c(chr_table_x,(img_width-0.5)*step);
+	chr_table_x = c(chr_table_x,(img_width-0.5)*step,Chr_end_table[Chromosome,2]);
 	print((img_width-0.5)*step)
 	segment_interval = (temp_chr_table_x >= (img_width-1)*step & temp_chr_table_x <= img_width*step);
 	segment = temp_chr_table_y[segment_interval];
-	segment_data = 0
+	segment_data_av = 0
+	segment_data_min = 0
+	segment_data_max = 0
 	if(length(segment)>0){
 # 			print(temp_chr_table_y[segment_interval])
-		segment_data = max(segment);
+		segment_data_av = mean(segment);
+		segment_data_max = max(segment);
+		segment_data_min = mim(segment);
 	}
-	chr_table_y = c(chr_table_y,segment_data);
+	chr_table_y_avr = c(chr_table_y_avr,segment_data_avr,0);
+	chr_table_y_max = c(chr_table_y_max,segment_data_max,0);
+	chr_table_y_min = c(chr_table_y_min,segment_data_min,0);
 	
 	
 	
@@ -74,15 +88,23 @@ for (Chromosome in chr_list){
 	
 	#	Histograma
 	plot(	chr_table_x,
-		chr_table_y,
+		chr_table_y_max,
 		type="h",
-		col="blue",
+		col="orangered3",
 		main=Chromosome, 
 		xlab="Coordenada", 
 		ylab="Cobertura",
 		xlim=c(0, Chr_end_table[Chromosome,2]), 
 		ylim=c(0, height),
 		axes=TRUE);
+	lines(	chr_table_x,
+		chr_table_y_avr,
+		type="h",
+		col="mediumseagreen");
+	lines(	chr_table_x,
+		chr_table_y_min,
+		type="h",
+		col="blue");
 # 	axis(side=1,pos=Chr_end_table[Chromosome,2])
 # 	axis(side=2,pos=height)
 	
