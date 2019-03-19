@@ -567,7 +567,7 @@ do
 done
 
 #	Obtneer aquellas que se encuentren en los todos experimentos
-n_req=$((${#Experimentos[@]}))
+n_req=$((${#Experimentos[@]}-1)) 	# el menos 1 es porque la referencia cuenta como +1
 cat *_Freq.bed | tr -s " " \
 	| awk -v OFS='\t' -v n="${n_req}"  '{if($1 == n) print $2,$3,$4}' \
 	| sort -k1,1 -k2,2n | uniq > Deletions_Uniq_Recurrent.bed
