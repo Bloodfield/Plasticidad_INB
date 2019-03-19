@@ -49,12 +49,12 @@ for (Chromosome in chr_list){
 		chr_table_x = c(chr_table_x,(i-0.5)*step);
 		segment_interval = (temp_chr_table_x >= (i-1)*step & temp_chr_table_x < i*step);
 		segment = temp_chr_table_y[segment_interval];
-		segment_data_av = 0
+		segment_data_avr = 0
 		segment_data_min = 0
 		segment_data_max = 0
 		if(length(segment)>0){
 # 			print(temp_chr_table_y[segment_interval])
-			segment_data_av = mean(segment);
+			segment_data_avr = mean(segment);
 			segment_data_max = max(segment);
 			segment_data_min = mim(segment);
 		}
@@ -66,12 +66,12 @@ for (Chromosome in chr_list){
 	print((img_width-0.5)*step)
 	segment_interval = (temp_chr_table_x >= (img_width-1)*step & temp_chr_table_x <= img_width*step);
 	segment = temp_chr_table_y[segment_interval];
-	segment_data_av = 0
+	segment_data_avr = 0
 	segment_data_min = 0
 	segment_data_max = 0
 	if(length(segment)>0){
 # 			print(temp_chr_table_y[segment_interval])
-		segment_data_av = mean(segment);
+		segment_data_avr = mean(segment);
 		segment_data_max = max(segment);
 		segment_data_min = mim(segment);
 	}
