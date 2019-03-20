@@ -56,7 +56,7 @@ for (Chromosome in chr_list){
 # 			print(temp_chr_table_y[segment_interval])
 			segment_data_avr = mean(segment);
 			segment_data_max = max(segment);
-			segment_data_min = mim(segment);
+			segment_data_min = min(segment);
 		}
 		chr_table_y_avr = c(chr_table_y_avr,segment_data_avr);
 		chr_table_y_max = c(chr_table_y_max,segment_data_max);
@@ -73,7 +73,7 @@ for (Chromosome in chr_list){
 # 			print(temp_chr_table_y[segment_interval])
 		segment_data_avr = mean(segment);
 		segment_data_max = max(segment);
-		segment_data_min = mim(segment);
+		segment_data_min = min(segment);
 	}
 	chr_table_y_avr = c(chr_table_y_avr,segment_data_avr,0);
 	chr_table_y_max = c(chr_table_y_max,segment_data_max,0);
