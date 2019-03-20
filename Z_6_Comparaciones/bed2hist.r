@@ -42,7 +42,7 @@ for (Chromosome in chr_list){
 	temp_chr_table_y = bed_table[bed_table[,1]==Chromosome,3];
 	chr_table_x = c();
 	chr_table_y_max = c();
-	chr_table_y_av = c();
+	chr_table_y_avr = c();
 	chr_table_y_min = c();
 	step = temp_chr_table_x[length(temp_chr_table_x)] / img_width;
 	for (i in 1:(img_width-1)) {
