@@ -16,14 +16,14 @@ img_height=350;
 bed_table = read.table("stdin");
 
 centromere_coords=paste(path.expand("~"),"/bin/centromere_coords.bed",sep="")
-# centromere_table = read.table(centromere_coords);
-centromere_table = read.table("/home/bloodfield/W_Root/1_Scy/Biología_Computer_Bioinformática/Plasticidad/Z_6_Comparaciones/centromere_coords.bed");
+centromere_table = read.table(centromere_coords);
+# centromere_table = read.table("/home/bloodfield/W_Root/1_Scy/Biología_Computer_Bioinformática/Plasticidad/Z_6_Comparaciones/centromere_coords.bed");
 row.names(centromere_table) <- centromere_table[,1];
 centromere_table <- centromere_table[,2-3]
 
 Chr_end = paste(path.expand("~"),"/bin/human.hg38.genome",sep="")
-# Chr_end_table = read.table(Chr_end);
-Chr_end_table = read.table("/home/bloodfield/W_Root/1_Scy/Biología_Computer_Bioinformática/Plasticidad/Z_6_Comparaciones/human.hg38.genome");
+Chr_end_table = read.table(Chr_end);
+# Chr_end_table = read.table("/home/bloodfield/W_Root/1_Scy/Biología_Computer_Bioinformática/Plasticidad/Z_6_Comparaciones/human.hg38.genome");
 row.names(Chr_end_table) <- Chr_end_table[,1]
 
 #	For every Chromosome
