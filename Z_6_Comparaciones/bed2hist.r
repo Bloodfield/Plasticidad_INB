@@ -93,7 +93,7 @@ for (Chromosome in chr_list){
 		col="orangered3",
 		main=Chromosome, 
 		xlab="Coordenada", 
-		ylab="Cobertura",
+		ylab="Frecuencia de deleciones recurrentes",
 		xlim=c(0, Chr_end_table[Chromosome,2]), 
 		ylim=c(0, height),
 		axes=TRUE);
