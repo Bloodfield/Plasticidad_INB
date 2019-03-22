@@ -54,9 +54,19 @@ for (Chromosome in chr_list){
 		segment_data_max = 0
 		if(length(segment)>0){
 # 			print(temp_chr_table_y[segment_interval])
-			segment_data_avr = mean(segment);
 			segment_data_max = max(segment);
-			segment_data_min = min(segment);
+			
+			#	Promedio real
+			inicio = chr_table_x[1]-1;
+			fin = chr_table_x[length(chr_table_x)];
+			factor_avr =  length(chr_table_x) / (fin - inicio);
+			segment_data_avr = mean(segment)*factor_avr;
+			
+			#	Minimo real
+			segment_data_min = 0;
+			if (factor_avr == 1){
+				segment_data_min = min(segment)
+			}
 		}
 		chr_table_y_avr = c(chr_table_y_avr,segment_data_avr);
 		chr_table_y_max = c(chr_table_y_max,segment_data_max);
@@ -71,9 +81,19 @@ for (Chromosome in chr_list){
 	segment_data_max = 0
 	if(length(segment)>0){
 # 			print(temp_chr_table_y[segment_interval])
-		segment_data_avr = mean(segment);
 		segment_data_max = max(segment);
-		segment_data_min = min(segment);
+		
+		#	Promedio real
+		inicio = chr_table_x[1]-1;
+		fin = chr_table_x[length(chr_table_x)];
+		factor_avr =  length(chr_table_x) / (fin - inicio);
+		segment_data_avr = mean(segment)*factor_avr;
+		
+		#	Minimo real
+		segment_data_min = 0;
+		if (factor_avr == 1){
+			segment_data_min = min(segment)
+		}
 	}
 	chr_table_y_avr = c(chr_table_y_avr,segment_data_avr,0);
 	chr_table_y_max = c(chr_table_y_max,segment_data_max,0);
