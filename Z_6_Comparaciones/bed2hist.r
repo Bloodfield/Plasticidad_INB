@@ -64,8 +64,9 @@ for (Chromosome in chr_list){
 			
 			#	Minimo real
 			segment_data_min = 0;
-			if (factor_avr == 1){
-				segment_data_min = min(segment)
+			if (length(chr_table_x) == (fin - inicio)){
+				segment_data_min = min(segment);
+				segment_data_avr = mean(segment);
 			}
 		}
 		chr_table_y_avr = c(chr_table_y_avr,segment_data_avr);
@@ -91,8 +92,9 @@ for (Chromosome in chr_list){
 		
 		#	Minimo real
 		segment_data_min = 0;
-		if (factor_avr == 1){
-			segment_data_min = min(segment)
+		if (length(chr_table_x) == (fin - inicio)){
+			segment_data_min = min(segment);
+			segment_data_avr = mean(segment);
 		}
 	}
 	chr_table_y_avr = c(chr_table_y_avr,segment_data_avr,0);
