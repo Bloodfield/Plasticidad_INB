@@ -57,14 +57,17 @@ for (Chromosome in chr_list){
 			segment_data_max = max(segment);
 			
 			#	Promedio real
-			inicio = chr_table_x[1]-1;
-			fin = chr_table_x[length(chr_table_x)];
-			factor_avr =  length(chr_table_x) / (fin - inicio);
+			inicio = temp_chr_table_x[1]-1;
+			fin = temp_chr_table_x[length(temp_chr_table_x)];
+			factor_avr =  length(temp_chr_table_x) / (fin - inicio);
 			segment_data_avr = mean(segment)*factor_avr;
 			
 			#	Minimo real
 			segment_data_min = 0;
-			if (length(chr_table_x) == (fin - inicio)){
+# 			db_1 = paste( length(temp_chr_table_x) , (fin - inicio),sep =";")
+# 			print(db_1);
+			if (length(temp_chr_table_x) == (fin - inicio)){
+# 				print("It did it ! ");
 				segment_data_min = min(segment);
 				segment_data_avr = mean(segment);
 			}
@@ -83,16 +86,19 @@ for (Chromosome in chr_list){
 	if(length(segment)>0){
 # 			print(temp_chr_table_y[segment_interval])
 		segment_data_max = max(segment);
-		
+			
 		#	Promedio real
-		inicio = chr_table_x[1]-1;
-		fin = chr_table_x[length(chr_table_x)];
-		factor_avr =  length(chr_table_x) / (fin - inicio);
+		inicio = temp_chr_table_x[1]-1;
+		fin = temp_chr_table_x[length(temp_chr_table_x)];
+		factor_avr =  length(temp_chr_table_x) / (fin - inicio);
 		segment_data_avr = mean(segment)*factor_avr;
 		
 		#	Minimo real
 		segment_data_min = 0;
-		if (length(chr_table_x) == (fin - inicio)){
+# 		db_1 = paste( length(temp_chr_table_x) , (fin - inicio),sep =";")
+# 		print(db_1);
+		if (length(temp_chr_table_x) == (fin - inicio)){
+# 			print("It did it ! ");
 			segment_data_min = min(segment);
 			segment_data_avr = mean(segment);
 		}
