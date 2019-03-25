@@ -1,5 +1,8 @@
 
 #!/usr/bin/env Rscript
+
+#	TODO
+#	Mejorar el uso de memoria al mejorar la lectura del input
 args = commandArgs(trailingOnly=TRUE)
 
 if (length(args)!=1){
@@ -49,6 +52,7 @@ for (Chromosome in chr_list){
 		chr_table_x = c(chr_table_x,(i-0.5)*step);
 		segment_interval = (temp_chr_table_x >= (i-1)*step & temp_chr_table_x < i*step);
 		segment = temp_chr_table_y[segment_interval];
+		segment_coords = temp_chr_table_x[segment_interval];
 		segment_data_avr = 0
 		segment_data_min = 0
 		segment_data_max = 0
@@ -57,16 +61,16 @@ for (Chromosome in chr_list){
 			segment_data_max = max(segment);
 			
 			#	Promedio real
-			inicio = temp_chr_table_x[1]-1;
-			fin = temp_chr_table_x[length(temp_chr_table_x)];
-			factor_avr =  length(temp_chr_table_x) / (fin - inicio);
+			inicio = segment_coords[1]-1;
+			fin = segment_coords[length(segment_coords)];
+			factor_avr =  length(segment_coords) / (fin - inicio);
 			segment_data_avr = mean(segment)*factor_avr;
 			
 			#	Minimo real
 			segment_data_min = 0;
 # 			db_1 = paste( length(temp_chr_table_x) , (fin - inicio),sep =";")
 # 			print(db_1);
-			if (length(temp_chr_table_x) == (fin - inicio)){
+			if (length(segment_coords) == (fin - inicio)){
 # 				print("It did it ! ");
 				segment_data_min = min(segment);
 				segment_data_avr = mean(segment);
@@ -80,25 +84,26 @@ for (Chromosome in chr_list){
 	print((img_width-0.5)*step)
 	segment_interval = (temp_chr_table_x >= (img_width-1)*step & temp_chr_table_x <= img_width*step);
 	segment = temp_chr_table_y[segment_interval];
+	segment_coords = temp_chr_table_x[segment_interval];
 	segment_data_avr = 0
 	segment_data_min = 0
 	segment_data_max = 0
 	if(length(segment)>0){
-# 			print(temp_chr_table_y[segment_interval])
+# 		print(temp_chr_table_y[segment_interval])
 		segment_data_max = max(segment);
-			
+		
 		#	Promedio real
-		inicio = temp_chr_table_x[1]-1;
-		fin = temp_chr_table_x[length(temp_chr_table_x)];
-		factor_avr =  length(temp_chr_table_x) / (fin - inicio);
+		inicio = segment_coords[1]-1;
+		fin = segment_coords[length(segment_coords)];
+		factor_avr =  length(segment_coords) / (fin - inicio);
 		segment_data_avr = mean(segment)*factor_avr;
 		
 		#	Minimo real
 		segment_data_min = 0;
 # 		db_1 = paste( length(temp_chr_table_x) , (fin - inicio),sep =";")
 # 		print(db_1);
-		if (length(temp_chr_table_x) == (fin - inicio)){
-# 			print("It did it ! ");
+		if (length(segment_coords) == (fin - inicio)){
+# 				print("It did it ! ");
 			segment_data_min = min(segment);
 			segment_data_avr = mean(segment);
 		}
