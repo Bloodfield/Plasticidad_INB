@@ -58,6 +58,7 @@
 #   
 #   Variable de n_part_spots
 #   Dependencias de programas
+#	Automatizar realizar el historgama de MapQ
 ##---------------------------------------------------------
 
 
@@ -237,7 +238,7 @@ segemehl.x -i ${IdxSegemehl} -S -s -d $GenomaRef -q ${name}_1_cured_seqtk.fastq.
 	samtools view -h -F 0x604 | \
 	samtools sort -o ${name}_sorted.bam -@ $((${n_threads}-1))
 	samtools index ${name}_sorted.bam
-
+	# samtools view ${name}_sorted.bam | cut -f5 | Rscript histogram.r MAPQ_${name}.pdf
 echo end
 
 " > $HOME/${name}_file/Alignment.sge

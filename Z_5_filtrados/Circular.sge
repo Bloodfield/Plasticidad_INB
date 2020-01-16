@@ -67,10 +67,12 @@ qbases="300"
 #	porcentaje de sobrelape para repeat masker
 percentage="20"
 #	Raiz de los archivos a analizar, sin extención
-name="SRR3290534"
+name="SRX257088"
 #	Habilita la creación de SGE's en caso de que ya existan (1 = habilitado, 0=deshabilitado)
 habilita_sge=1
 
+#	Mínimo de calidad de mapeo
+mapqual_min="5"
 #	Mínimo de frecuencia en las deleciones para reportar recurrentes
 score_min="2"
 #	Porcentage mínimo de sobrelape para considerar recurrencia
@@ -602,13 +604,18 @@ module load samtools
 echo File $name
 #	Se realiza el analisis de los CIGAR, y se crean los bed correspondientes a las deleciones
 
+echo MapQ filter
+samtools view -h -b -q ${mapqual_min} ${name}_sorted.bam > ${name}_sorted_2.bam
+mv ${name}_sorted_2.bam ${name}_sorted.bam
+samtools index ${name}_sorted.bam
+
 echo parce
 samtools view ${name}_sorted.bam  | SAM_parce_GAP ${name} 20
 
 #	Parceo de los split read y back splice
 
-egrep ";C;" ${name}.sngl.bed > ${name}_C.sngl.bed
-egrep ";B;" ${name}.sngl.bed > ${name}_B.sngl.bed
+# egrep ";C;" ${name}.sngl.bed > ${name}_C.sngl.bed
+# egrep ";B;" ${name}.sngl.bed > ${name}_B.sngl.bed
 
 # echo search C
 # search_bed_sam.pl ${name}_C.sngl.bed ${name}.sam > ${name}_C.fastq.sngl.sam # bed sam C

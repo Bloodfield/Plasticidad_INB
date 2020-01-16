@@ -54,7 +54,7 @@
 
 ####	Variables de entrada
 
-Experimentos=("SRR822853" "SRR733087" "SRR3325526")
+Experimentos=("SRR3325526" "SRR733087" "SRX257065" "SRX257088")
 
 #	BEDTOOLS
 # Reciprical fraction to give a overlap
@@ -536,6 +536,9 @@ chrY_KI270740v1_random
 #	Obteniendo el bedintersect de todas las bases de datos
 module load gcc
 module load bedtools
+module load htslib/1.2.1
+module load samtools
+# module load r/3.5.2
 
 for k in "${Experimentos[@]}"
 do
@@ -574,20 +577,6 @@ cat *_Freq.bed | tr -s " " \
 #	Obtiene todas las deleciones presentes en al menos 2 experimentos
 cat *_Freq.bed | tr -s " " | cut -d" " -f3- | sort -k1,1 -k1.4n -k2,3n | uniq > Deletions_Uniq.bed
 
-#	Obtiene los histogramas
-module load r/3.5.2
-
-for Chromosome in "${chr[@]}"
-do
-grep -P "^${Chromosome}\t" Deletions_Uniq_Recurrent.bed > temp.bed
-n_lines=$( wc -l temp.bed | cut -f1 -d" " )
-if [ ${n_lines} -gt 1 ]
-then
-bedtools genomecov -dz -i temp.bed -g $HOME/bin/human.hg38.genome | Rscript $HOME/bin/bed2hist.r Deletions_Uniq_${Chromosome}.bed
-fi
-done
-rm temp.bed
-
 #	Extra		Obtiene las longitudes
 awk -v OFS='\t' '{print $1,$2,$3-$2,$4,$5}' Deletions_Uniq.bed > Deletions_Uniq_Len.bed
 
@@ -606,9 +595,6 @@ mv Deletions_ViewAndFlanc_merge.bed Deletions_ViewAndFlanc.bed
 
 #		Obteniendo bam reducido sobre las delciones para visualización
 
-module load htslib/1.2.1
-module load samtools
-
 for k in "${Experimentos[@]}"
 do
 	samtools view -L Deletions_ViewAndFlanc.bed $HOME/${k}_file/${k}_sorted.bam -o ${k}_view.bam
@@ -620,23 +606,3 @@ done
 bedtools intersect -a Deletions_Uniq_Recurrent.bed -b $HOME/bin/genes_gdc_small_ucsc.bed -u -sorted > Intersect_Recurrent_Cancer.bed
 # bedtools intersect -a Deletions_Uniq.bed -b $HOME/bin/genes_gdc_small_ucsc.bed -u -sorted > Intersect_Cancer.bed
 
-# for Chromosome in "${chr[@]}"
-# do
-# grep -P "^${Chromosome}\t" Intersect_Cancer.bed > temp.bed
-# n_lines=$( wc -l temp.bed | cut -f1 -d" " )
-# if [ ${n_lines} -gt 1 ]
-# then
-# bedtools genomecov -dz -i temp.bed -g $HOME/bin/human.hg38.genome | Rscript $HOME/bin/bed2hist.r Intersect_Cancer_${Chromosome}.bed
-# fi
-# done
-
-for Chromosome in "${chr[@]}"
-do
-grep -P "^${Chromosome}\t" Intersect_Recurrent_Cancer.bed > temp.bed
-n_lines=$( wc -l temp.bed | cut -f1 -d" " )
-if [ ${n_lines} -gt 1 ]
-then
-bedtools genomecov -dz -i temp.bed -g $HOME/bin/human.hg38.genome | Rscript $HOME/bin/bed2hist.r Intersect_Recurrent_Cancer_${Chromosome}.bed
-fi
-done
-rm temp.bed
