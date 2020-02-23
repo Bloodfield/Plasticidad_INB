@@ -47,15 +47,15 @@
 
 ##---------------------------------------------------------
 #	TO DO LIST
-#	
+#	Incorporar Graficador
 ##---------------------------------------------------------
 
 ########	ZONA DE CONFIGURACIÓN
 
-####	Variables de entrada
+###	Variables de entrada
 
 Experimentos=("SRR3325526" "SRR733087" "SRX257065" "SRX257088")
-
+n_req=$((${#Experimentos[@]}-1)) 	# el menos 1 es porque la referencia cuenta como +1
 #	BEDTOOLS
 # Reciprical fraction to give a overlap
 fraction="0.5"
@@ -538,7 +538,7 @@ module load gcc
 module load bedtools
 module load htslib/1.2.1
 module load samtools
-# module load r/3.5.2
+module load r/3.5.2
 
 for k in "${Experimentos[@]}"
 do
@@ -565,12 +565,13 @@ do
 	#	Extra		Obtinene las longitudes de cada deleción 
 	awk -v OFS='\t' '{print $1,$2,$3-$2,$4,$5}' ${k}_Freq.bed > ${k}_Len.bed
 
+	awk -v OFS='\t' -v n="${n_req}" '{if($1 == n) print $2,$3,$4}' ${k}_Freq.bed \
+		| uniq > ${k}_Freq_Recurrent.bed
 	#	Extra		Se obtienen las frecuencias de longitudes
 	cut -f3  ${k}_Len.bed | sort -n | uniq -c > ${k}_Len_Freq.txt
 done
 
 #	Obtneer aquellas que se encuentren en los todos experimentos
-n_req=$((${#Experimentos[@]}-1)) 	# el menos 1 es porque la referencia cuenta como +1
 cat *_Freq.bed | tr -s " " \
 	| awk -v OFS='\t' -v n="${n_req}"  '{if($1 == n) print $2,$3,$4}' \
 	| sort -k1,1 -k2,2n | uniq > Deletions_Uniq_Recurrent.bed
@@ -589,7 +590,7 @@ cut -f3  Deletions_Uniq_Len.bed | sort -n | uniq -c > Deletions_Uniq_Len_Freq.tx
 awk -v OFS='\t' '{if ($3 -$2 < 1000000) print $1,$2-20,$3+20}' Deletions_Uniq_Recurrent.bed  > Deletions_ViewAndFlanc.bed
 
 #		Onteniendo bed compacto de regiones implicadas
-bedtools merge -i Deletions_ViewAndFlanc.bed > Deletions_ViewAndFlanc_merge.bed
+bedtools merge -i Deletions_ViewAndFlanc.bed > Delegit tions_ViewAndFlanc_merge.bed
 rm Deletions_ViewAndFlanc.bed
 mv Deletions_ViewAndFlanc_merge.bed Deletions_ViewAndFlanc.bed
 
@@ -606,3 +607,7 @@ done
 bedtools intersect -a Deletions_Uniq_Recurrent.bed -b $HOME/bin/genes_gdc_small_ucsc.bed -u -sorted > Intersect_Recurrent_Cancer.bed
 # bedtools intersect -a Deletions_Uniq.bed -b $HOME/bin/genes_gdc_small_ucsc.bed -u -sorted > Intersect_Cancer.bed
 
+#	Graficas de R
+cp ${origin}/Graficador_KaryploteR.r .
+cp ${origin}/cancer_higligth_chr.txt .
+Rscript Graficador_KaryploteR.r
